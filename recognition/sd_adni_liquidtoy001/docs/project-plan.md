@@ -50,4 +50,4 @@ Historical user records report an A100 PCIe 40GB, a 12-hour course partition, an
 
 ## Preliminary evidence
 
-None yet. Repository setup is complete, but no remote audit or training result has been produced for this project. Add real audit outputs, baseline smoke-test measurements, and the resource budget here before presenting the one-page feasibility review.
+The [2 October audit](rangpur-audit-2026-10-02.md) found 30,520 grayscale JPEG slices from 1,526 scans and 680 patients, with metadata available for patient grouping. The supplied train/test directories share 216 patients and must not be described as patient-independent. Home has approximately 2.20 GiB free; a durable storage budget is still unresolved. No baseline smoke test or model training has occurred. Add the final split design and resource budget before presenting the one-page feasibility review.

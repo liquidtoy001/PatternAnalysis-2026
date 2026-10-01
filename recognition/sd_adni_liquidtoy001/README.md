@@ -2,7 +2,7 @@
 
 COMP3710 final report project by liquidtoy001.
 
-**Status: planning only. No dataset audit, model training, or evaluation has been completed.**
+**Status: initial read-only Rangpur/data audit complete. No model training or evaluation has been completed.** The supplied train/test directories share 216 patients; a patient-independent project split is required. Home has approximately 2.20 GiB free, so persistent model/checkpoint storage must be resolved before training.
 
 This project will investigate whether adapting a pretrained latent diffusion model to ADNI brain MRI improves structural fidelity and distribution coverage without increasing evidence of training-image memorization. The intended output is a research prototype and an evidence-based assessment, not a clinically validated generator.
 
@@ -18,6 +18,7 @@ The initial candidate is an SD 1.x-scale model with a frozen VAE and text encode
 - [Experiment ledger](docs/experiments.md)
 - [AI assistance record](AI_USAGE.md)
 - [Local development and single-PR workflow](docs/version-control.md)
+- [Rangpur and ADNI audit, 2 October 2026](docs/rangpur-audit-2026-10-02.md)
 
 ## Planned implementation
 
@@ -27,7 +28,7 @@ No executable training workflow is available yet.
 
 ## Artificial Intelligence Usage Disclosure
 
-OpenAI Codex assisted with interpreting the supplied assessment, discussing model and compute choices, and drafting this initial project documentation and Git configuration. The assistant checked the local assessment text and repository state. No training code or experimental results have been generated at this stage.
+OpenAI Codex assisted with interpreting the supplied assessment, discussing model and compute choices, drafting project documentation and Git configuration, and implementing/executing a read-only dataset audit. The assistant checked the local assessment text, repository state, remote resource information, and metadata-backed split overlap. The audit produced aggregate observations; no training or model-evaluation results exist yet.
 
 The student must review these documents and verify all subsequent code, equations, metrics, and experimental claims. The [AI assistance record](AI_USAGE.md) will track assistance and verification as development proceeds; student verification will only be recorded once performed.
 
