@@ -17,6 +17,7 @@ The initial candidate is an SD 1.x-scale model with a frozen VAE and text encode
 - [Project plan and feasibility review outline](docs/project-plan.md)
 - [Experiment ledger](docs/experiments.md)
 - [AI assistance record](AI_USAGE.md)
+- [Local development and single-PR workflow](docs/version-control.md)
 
 ## Planned implementation
 
@@ -34,7 +35,7 @@ The student must review these documents and verify all subsequent code, equation
 
 Development takes place on `topic-recognition` in the student's fork. The eventual pull request targets `shakes76/PatternAnalysis-2026:topic-recognition`. Commit changes at genuine milestones, using explicit file paths when staging. Keep datasets, model weights, credentials, and bulk run artifacts outside Git; include selected report figures and compact measured result tables deliberately.
 
-The assessment also requires a midpoint feasibility check-off, a PDF export of this report submitted to Turnitin, and a later response to teaching-team code review. The student-reported target deadline is 26 October 2026; the exact submission time and midpoint date remain unverified.
+The assessment also requires a midpoint feasibility check-off, a PDF export of this report submitted to Turnitin, and a later response to teaching-team code review. On 2 October 2026 the student supplied a course-profile excerpt showing 19–30 October 2026 and a tutor clarification that check-off shares the final-report deadline and can be completed earlier when prepared. This supersedes the earlier tentative 26 October date. The exact Phase 1 submission timestamp must still be checked in the assessment submission page; the quoted answer does not explicitly specify that timestamp.
 
 ## Sources
 
