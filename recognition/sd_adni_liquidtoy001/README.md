@@ -19,10 +19,12 @@ The initial candidate is an SD 1.x-scale model with a frozen VAE and text encode
 - [AI assistance record](AI_USAGE.md)
 - [Local development and single-PR workflow](docs/version-control.md)
 - [Rangpur and ADNI audit, 2 October 2026](docs/rangpur-audit-2026-10-02.md)
+- [Provisional patient split and preprocessing protocol](docs/data-protocol.md)
+- [Data preparation implementation and validation status](docs/data-preparation-status.md)
 
 ## Planned implementation
 
-The assessed implementation will include `modules.py`, `dataset.py`, `train.py`, and `predict.py`. These files will be added when they contain working functionality. Environment versions, commands, architecture explanations, figures, and measured results will be documented as they become available.
+`dataset.py` now implements manifest validation and image loading, with seven passing local contract tests. Full-data CPU preparation/acceptance is queued and not yet verified. `modules.py`, `train.py`, and `predict.py` will be added when they contain working functionality. Environment versions, commands, architecture explanations, figures, and measured results will be documented as they become available.
 
 No executable training workflow is available yet.
 

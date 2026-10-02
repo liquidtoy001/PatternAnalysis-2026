@@ -15,11 +15,14 @@ __pycache__/
 # Datasets and large/reconstructible run artifacts
 data/
 datasets/
+manifests/
 checkpoints/
 models/
 outputs/
 runs/
 logs/
+data_check_*.out
+data_check_*.err
 wandb/
 *.pt
 *.pth

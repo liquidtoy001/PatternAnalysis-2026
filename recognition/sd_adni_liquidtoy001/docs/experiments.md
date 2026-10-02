@@ -4,6 +4,8 @@ No experiments have been run for this project.
 
 Pre-experiment audit: [Rangpur/ADNI, 2026-10-02](rangpur-audit-2026-10-02.md), CPU job 620988, completed with exit 0:0. This is a dataset/resource inspection, not a model experiment. The report also records unsuccessful preliminary shell probes.
 
+Data preparation: [status](data-preparation-status.md). Local data-contract tests pass; CPU job 623310 is pending. No model metrics or completed split results are available.
+
 For each real run, record:
 
 - Run ID, purpose/hypothesis, and date/time with timezone.
