@@ -15,21 +15,27 @@ Seven local unit tests passed using deliberately synthetic tiny grayscale images
 
 Ruff check and formatting validation passed on the new Python files. The loader uses PyTorch and Pillow; torchvision is not required for pixel conversion.
 
-## Remote acceptance pending
+## Remote acceptance completed
 
-Immediate CPU allocation 623309 was cancelled when resources were unavailable. Batch job **623310**, `sd-data-check`, was submitted to the CPU partition with one CPU and a five-minute running-time limit. Last observed state: **PENDING (Resources)**. Another user-owned Transformer backup job was also pending and was not modified.
+CPU job **623310** completed with **exit 0:0 in 40 seconds**. Both aggregate
+outputs were retrieved and verified on 2 October 2026 (Australia/Brisbane):
+[data preparation](data-preparation-2026-10-02.json) and
+[loader validation](data-validation-2026-10-02.json).
 
-No actual new split counts, image-decoding success, or real-data loader acceptance are claimed yet. Retrieve and inspect the following only after the job completes successfully:
+- All 30,520 JPEGs fully decoded at 256 x 240, grayscale L.
+- No duplicate file-hash groups or cross-split patient/scan/hash overlap.
+- Train: 476 patients, 1,064 scans, 21,280 slices.
+- Validation: 102 patients, 227 scans, 4,540 slices.
+- Test: 102 patients, 235 scans, 4,700 slices.
+- Deterministic assignment and complete source coverage passed.
+- Actual train/validation tensors and batch collation passed; corrupted manifest
+  controls for patient overlap, path escape, label mismatch and duplicate rows
+  were rejected. Test images were decoded for integrity, not model evaluation.
+- Manifest SHA-256: `bc77d11ade201eaa0acbbcd1986be565557c161bc676bc45b230dae52e557396`.
 
-```text
-~/comp3710-sd-audit/project/data/preparation.json
-~/comp3710-sd-audit/project/data/validation.json
-~/comp3710-sd-audit/project/data/manifest-seed3710.csv
-~/comp3710-sd-audit/project/data_check_623310.out
-~/comp3710-sd-audit/project/data_check_623310.err
-```
-
-The CSV contains patient-level information and remains outside public Git history. Code writes only small project files and the manifest; it does not copy MRI images, modify source data, install dependencies, clean home, or use a GPU. The job is not an automatic ongoing monitor.
+The patient-level CSV remains private on Rangpur. No image or patient identifier
+is included in the committed aggregate reports. The split remains provisional
+pending course-protocol confirmation, even though engineering acceptance passed.
 
 ## Reproduction
 
@@ -41,4 +47,4 @@ python -m unittest discover -s tests -v
 
 On Rangpur, upload `dataset.py` and `tools/` to an isolated project directory, enter it, and submit `sbatch tools/prepare_data.sbatch`. The generator refuses to overwrite an existing manifest. Do not resubmit a completed preparation without first deciding whether to reuse the verified manifest or create a separate run directory. Check `sacct` and both JSON outputs, not merely log existence.
 
-After real-data acceptance, address durable model/checkpoint storage and run a VAE reconstruction check on training/validation samples. No GPU experiment is ready or queued yet.
+Home space is now approximately 12 GiB free. The next bounded diagnostic is documented in [the VAE protocol](vae-protocol.md); see the experiment ledger for its current scheduling status.

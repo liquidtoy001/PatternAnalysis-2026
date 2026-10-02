@@ -29,3 +29,13 @@ Add entries as work proceeds. Describe substantive AI contributions accurately a
 - Codex drafted the pre-experiment data protocol, implemented patient-stratified manifests and image loading, and added a CPU-only real-data validation command.
 - Seven meaningful local unit tests passed using explicitly synthetic fixtures; they check data/geometry contracts and rejection of corrupt manifests, not training success. Ruff checks passed. An unnecessary torchvision import was removed after local inspection showed it was absent; tensor conversion uses PyTorch directly.
 - Full-data validation is queued as CPU job 623310 and is not yet accepted. No dependency installation, model download, source-data modification, or GPU allocation occurred. Student review remains pending.
+
+## 2026-10-02 — Accepted data and queued VAE diagnostic
+
+Codex verified completed CPU job 623310 and retrieved its real aggregate results.
+After the student confirmed storage release, a read-only check found approximately
+12 GiB free and no running user jobs. Codex documented the VAE protocol, pinned
+the SD 1.5 VAE revision, implemented isolated package setup and a bounded paired
+reconstruction diagnostic, and submitted dependent CPU/GPU jobs 623826/623828.
+Local syntax and Ruff checks passed; remote setup and reconstruction remain
+pending. Student review is still pending. No patient-level artifacts were pushed.

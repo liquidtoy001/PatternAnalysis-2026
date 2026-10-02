@@ -24,9 +24,9 @@ The initial candidate is an SD 1.x-scale model with a frozen VAE and text encode
 
 ## Planned implementation
 
-`dataset.py` now implements manifest validation and image loading, with seven passing local contract tests. Full-data CPU preparation/acceptance is queued and not yet verified. `modules.py`, `train.py`, and `predict.py` will be added when they contain working functionality. Environment versions, commands, architecture explanations, figures, and measured results will be documented as they become available.
+`dataset.py` now implements manifest validation and image loading, with seven passing local contract tests. Full-data CPU preparation/acceptance passed in job 623310 (40 seconds, exit 0:0). `modules.py`, `train.py`, and `predict.py` will be added when they contain working functionality. Environment versions, commands, architecture explanations, figures, and measured results will be documented as they become available.
 
-No executable training workflow is available yet.
+No executable training workflow is available yet. A bounded VAE reconstruction diagnostic is now available; see [the protocol](docs/vae-protocol.md).
 
 ## Artificial Intelligence Usage Disclosure
 
