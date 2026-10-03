@@ -37,3 +37,17 @@ Keep failed and inconclusive runs. Distinguish measurements from estimates and p
   `outputs/vae-623828/results.json`; triptychs in the same ignored directory.
 - Retrieve both exit statuses and inspect numerical results and images before
   reporting success. No reconstruction metric is claimed while queued.
+
+## Dependency failure and retry — 3 October 2026
+
+Job 623826 FAILED with exit 1:0 after 10 seconds. Pip rejected the requested
+huggingface-hub 2.1.1 because diffusers 0.40.0 requires >=1.23.0,<2.0.
+The initial pins were incompatible; no VAE results were produced. Dependent GPU
+job 623828 was CANCELLED without running, as intended by the dependency guard.
+
+Verified the version constraint from PyPI package metadata and changed only
+huggingface-hub to 1.33.0. CPU setup retry **625832** and dependent GPU diagnostic
+**625833** were submitted. Last observed: setup pending resources, diagnostic
+waiting on successful setup. Real environment resolution and model execution
+remain unverified until those jobs complete. New outputs use their new job IDs;
+failed-run records are retained.

@@ -39,3 +39,10 @@ the SD 1.5 VAE revision, implemented isolated package setup and a bounded paired
 reconstruction diagnostic, and submitted dependent CPU/GPU jobs 623826/623828.
 Local syntax and Ruff checks passed; remote setup and reconstruction remain
 pending. Student review is still pending. No patient-level artifacts were pushed.
+
+## 2026-10-03 — Repair incompatible dependency pins
+
+Codex inspected the actual setup failure, acknowledged the incompatible initial
+Hub pin, checked PyPI metadata, changed Hub to 1.33.0 and resubmitted the guarded
+CPU/GPU job chain (625832/625833). This is a dependency correction, not a successful
+model experiment. Student review remains pending.
