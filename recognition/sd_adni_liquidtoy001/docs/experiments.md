@@ -51,3 +51,13 @@ huggingface-hub to 1.33.0. CPU setup retry **625832** and dependent GPU diagnost
 waiting on successful setup. Real environment resolution and model execution
 remain unverified until those jobs complete. New outputs use their new job IDs;
 failed-run records are retained.
+
+### Setup retry accepted
+
+Job **625832 COMPLETED, exit 0:0, 1 minute 19 seconds**. Package installation,
+`pip check`, pinned VAE download and CPU model loading all passed. The downloaded
+weights occupy 334,643,276 bytes. See `vae-model-provenance.json` for revision and
+file hashes and `vae-environment-2026-10-03.txt` for resolved package versions.
+GPU reconstruction job **625833** remains pending; no reconstruction figures or
+quality metrics are available yet. This supersedes the retry's pending-setup
+snapshot above. No SD training has been run.
