@@ -61,3 +61,35 @@ file hashes and `vae-environment-2026-10-03.txt` for resolved package versions.
 GPU reconstruction job **625833** remains pending; no reconstruction figures or
 quality metrics are available yet. This supersedes the retry's pending-setup
 snapshot above. No SD training has been run.
+
+## VAE reconstruction accepted — 4 October 2026
+
+After about 29 hours pending in comp3710, existing job 625833 was moved with
+`scontrol update JobId=625833 Partition=a100-test`. Eligibility and the test
+partition's 20-minute QoS limit were checked first. No duplicate was submitted.
+It COMPLETED with exit 0:0 in 33 seconds on a100-b, NVIDIA A100-PCIE-40GB.
+
+All 16 records (8 preselected slices at two resolutions) and corresponding
+triptychs were retrieved into ignored `outputs/vae-625833/`. Finite checks passed;
+the held-out project test split was not evaluated. Original source directory
+names may say test because the project uses a new patient-grouped manifest.
+
+| Resolution | Mean per-image PSNR, 8 images (dB) | Peak torch allocated GiB |
+| --- | ---: | ---: |
+| 256 | 27.0383 | 0.5218 |
+| 512 | 35.3320 | 1.0866 |
+
+PSNR is measured against each resolution's own preprocessed input after decoder
+clipping. These numbers are not a common-native-resolution comparison or SD
+training metrics. Upsampling to 512 does not create new acquired detail. GPU
+allocation is VAE-only, not total device use or future training memory. Timing
+includes a cold first inference and is not a warmed throughput benchmark.
+
+Visual inspection of validation-1-AD at both sizes found preserved gross shape,
+more visible fine-detail smoothing at 256, and smaller displayed error at 512.
+This is one inspected pair, not a medical or population-wide quality judgment.
+The raw decoder clipping fractions span roughly 47–73%; before finalizing the
+protocol, measure unclipped error and distinguish background undershoot from
+foreground overshoot. These fractions alone do not establish severe distortion.
+Next: refine that diagnostic and prepare bounded training/save/resume validation;
+no optimizer update has yet been run.
