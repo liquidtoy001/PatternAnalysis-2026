@@ -46,3 +46,13 @@ Codex inspected the actual setup failure, acknowledged the incompatible initial
 Hub pin, checked PyPI metadata, changed Hub to 1.33.0 and resubmitted the guarded
 CPU/GPU job chain (625832/625833). This is a dependency correction, not a successful
 model experiment. Student review remains pending.
+
+## 2026-10-04 — Real LoRA restart acceptance and website update
+
+Codex authored the pre-run protocol, VAE clipping diagnostics and minimal LoRA
+training/restart comparator; verified package constraints against PyPI metadata;
+and ran CPU/GPU jobs 629842, 629851 and 629852. All completed with exit 0:0.
+The restart comparator used real checkpoints and included intentional corruption
+controls. Raw medical artifacts remain ignored/private; aggregate evidence was
+used for the learning website. Student review is pending. This is engineering
+acceptance, not a successful formal generation experiment.

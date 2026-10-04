@@ -118,6 +118,30 @@ def main():
                     original = (pixels[0] + 1) / 2
                     raw = (decoded[0] + 1) / 2
                     reconstruction = raw.clamp(0, 1)
+                    # This intensity mask is a diagnostic, not anatomical segmentation.
+                    foreground = original > 0.02
+                    outside = (raw < 0) | (raw > 1)
+                    raw_error = (original - raw).square()
+                    region_stats = {}
+                    for name, mask in (
+                        ("foreground", foreground),
+                        ("background", ~foreground),
+                    ):
+                        region_stats[name] = {
+                            "pixels": int(mask.sum().item()),
+                            "clipped_fraction": outside[mask].float().mean().item()
+                            if mask.any()
+                            else None,
+                            "raw_mse": raw_error[mask].mean().item()
+                            if mask.any()
+                            else None,
+                            "mean_clipping_magnitude": (raw - reconstruction)
+                            .abs()[mask]
+                            .mean()
+                            .item()
+                            if mask.any()
+                            else None,
+                        }
                     mse = (original - reconstruction).square().mean().item()
                     label = f"{split}-{position + 1}-{sample['class_name']}-{size}"
                     save_triptych(
@@ -131,6 +155,11 @@ def main():
                             "relative_path": sample["relative_path"],
                             "source_sha256": actual_hash,
                             "mse": mse,
+                            "raw_mse": raw_error.mean().item(),
+                            "raw_min": raw.min().item(),
+                            "raw_max": raw.max().item(),
+                            "intensity_threshold": 0.02,
+                            "regions": region_stats,
                             "psnr_db": -10 * math.log10(mse) if mse else None,
                             "perfect_reconstruction": mse == 0,
                             "clipped_fraction": ((raw < 0) | (raw > 1))

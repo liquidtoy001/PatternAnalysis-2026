@@ -93,3 +93,35 @@ protocol, measure unclipped error and distinguish background undershoot from
 foreground overshoot. These fractions alone do not establish severe distortion.
 Next: refine that diagnostic and prepare bounded training/save/resume validation;
 no optimizer update has yet been run.
+
+## Short training and restart acceptance — 4 October 2026
+
+Protocol was recorded before execution in `smoke-training-protocol.md`.
+CPU job 629842 completed in 2m28s, exit 0:0: dry-run resolution, installation,
+pip check, pinned component download, CPU load and LoRA attachment passed.
+VAE diagnostic 629851 completed in 12s, exit 0:0. Intensity-mask (>0.02) foreground
+clipping averaged 0.97%/0.21% at 256/512; background clipping averaged 66.9%/76.3%
+but correction magnitude was approximately 0.004. Raw/clipped MSE is retained
+in `vae-clipping-2026-10-04.json`. This mask is not anatomical segmentation.
+
+GPU job **629852 completed in 55 seconds, exit 0:0**, in a100-test. Real pretrained
+SD1.5 LoRA updates ran as continuous8, interrupted4 and resumed4 in three Python
+processes. Final adapter maximum difference was **0.0**. Optimizer, scheduler,
+CPU/CUDA RNG and input/noise/timestep/loss traces matched within documented
+floating tolerances. Corrupt-contract and changed-adapter negative controls were
+rejected. No decreasing-loss or image-quality claim is inferred.
+
+Trainable parameters: 797,184. Peak torch allocated bytes: 6,109,799,424 (~5.69 GiB).
+Continuous checkpoint: 9,884,717 bytes (~9.43 MiB), includes optimizer and RNG.
+Measured eight-update/save region: 4.376s; full three-process job: 55s. Do not use
+this tiny run as a production throughput estimate. Frozen source weights are
+loaded from the pinned fp16 files into float32; bfloat16 autocast is used for UNet
+compute. Diffusers emitted dtype-casting advisory warnings; no non-finite output
+or acceptance failure occurred. The constructor dtype cleanup can be considered
+with future trainer changes, without altering this accepted historical run.
+
+All raw output JSONs are retained in ignored local `outputs/`; model manifests,
+environment snapshot and aggregate acceptance are in docs. No medical images or
+patient-level manifests are uploaded to the website or public repository.
+The HTML is updated with these measured states. Formal baseline/adaptation,
+generation evaluation, and signal-driven checkpoint recovery remain outstanding.

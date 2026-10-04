@@ -1,5 +1,6 @@
 # Local environments, Python/build caches, and credentials
 .venv/
+.venv-train/
 venv/
 __pycache__/
 *.py[cod]
