@@ -169,3 +169,8 @@ Initial state: gate RUNNING; long PENDING(Dependency). Fresh base weights, all
 training-split slices eligible,20000 updates, complete checkpoints and fixed
 sampling every2000 updates. Approximately0.94 slice epochs, not proof of convergence.
 Queue position and completion time are unknown. No validation/test evaluation.
+
+Gate629930 COMPLETED in46s, exit0:0. Full state comparison passed with final
+adapter max difference0.0; corruption negative controls rejected. Acceptance is
+saved in full-gate-2026-10-04.json. Long job629931 dependency is satisfied and its
+latest queue reason is Priority, not a failed test or missing GPU request.
