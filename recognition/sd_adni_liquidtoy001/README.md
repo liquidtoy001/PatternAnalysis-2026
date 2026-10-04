@@ -3,8 +3,8 @@
 COMP3710 final report project by liquidtoy001.
 
 **Status (4 October 2026): patient-independent data acceptance, VAE diagnostics,
-and eight-step LoRA restart acceptance passed. Pilot job 629919 has been submitted;
-its 200-step generation experiment is pending verification. Formal baseline and
+and eight-step LoRA restart acceptance passed. Pilot job 629919 completed 200 updates in 2m15s; all24 fixed-seed samples
+were retrieved and paired-noise/file-integrity checks passed. Visual failures remain. Formal baseline and
 held-out quality evaluation are not complete.**
 
 This project will investigate whether adapting a pretrained latent diffusion model to ADNI brain MRI improves structural fidelity and distribution coverage without increasing evidence of training-image memorization. The intended output is a research prototype and an evidence-based assessment, not a clinically validated generator.

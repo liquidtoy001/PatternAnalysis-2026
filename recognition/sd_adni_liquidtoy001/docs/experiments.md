@@ -132,3 +132,26 @@ Job629919: a100-test, one GPU,20-minute wall-time cap. Protocol is in
 pilot-protocol.md. Selected32 training patients (16AD/16NC),200 updates, fixed
 8-image DDIM grids at steps0/100/200. Checkpoint100 resumes in a new process.
 Submission is not success; results are pending. Held-out test data stays sealed.
+
+### Pilot629919 result
+
+COMPLETED, exit0:0,2m15s on A100. Retrieved both checkpoints, reports and all24
+images into ignored local outputs/pilot-629919. Verified steps100/200, resumed
+flag, identical contracts, preserved first100 traces,32 unique training indices,
+finite loss/gradients, eight records per stage, PNG hashes, and identical paired
+initial-noise hashes across all three stages. Training peak allocation5.69GiB;
+final checkpoint9,912,045bytes. Aggregate: pilot-acceptance-2026-10-04.json.
+
+Visual inspection of all three uncurated grids: step0 is strongly colored and
+non-MRI-like; steps100/200 become predominantly grayscale with brain-like textures.
+However, multiple disconnected structures, implausible geometry and collage-like
+composition persist. AD/NC images sharing a seed are visually very similar.
+This does not demonstrate anatomical validity or learned disease conditioning.
+These are observed failure modes, not verified causal diagnoses. Sampling uses
+256 pixels and guidance1, so these observations do not characterize every possible
+base-model inference setting. Do not attribute changes solely to generalization
+or infer privacy; nearest-neighbor auditing has not been done.
+
+Next: investigate the sampling/settings contribution and training-slice composition,
+then implement the simple baseline and broader evaluation before extending training.
+No automatic long training was submitted.

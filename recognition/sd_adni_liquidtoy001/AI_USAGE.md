@@ -65,3 +65,8 @@ updates, with deterministic shuffled order and fixed DDIM sampling at0/100/200.
 The original smoke code is unchanged. Local Ruff and syntax checks passed; remote
 Python/shell syntax checks passed. Submitted job629919. Execution and visual
 acceptance are pending; student code/protocol review remains pending.
+
+Pilot629919 completed with exit0:0 in2m15s. Codex retrieved private artifacts,
+verified actual traces/paired noise/file hashes and inspected all three grids.
+Observed appearance changes and persistent structural failures are recorded in the
+ledger without claiming medical validity. Student verification remains pending.
