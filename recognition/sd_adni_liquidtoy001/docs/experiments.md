@@ -155,3 +155,17 @@ or infer privacy; nearest-neighbor auditing has not been done.
 Next: investigate the sampling/settings contribution and training-slice composition,
 then implement the simple baseline and broader evaluation before extending training.
 No automatic long training was submitted.
+
+## Full-split long experiment queued — 4 October 2026
+
+User requested prioritizing the longer training queue to preserve analysis/rework
+ time. Recorded full-training-protocol.md before submission. Frozen remote source:
+~/comp3710-sd-audit/runs/full20k-20261004, with source-sha256.txt; shared model/data
+and environment symlinks. No queued source will be edited in place.
+
+Gate629930 runs actual continuous8 versus4+4 state comparison in a100-test.
+Long job629931 uses afterok:629930, comp3710 account/partition,1GPU,2CPUs,4h cap.
+Initial state: gate RUNNING; long PENDING(Dependency). Fresh base weights, all
+training-split slices eligible,20000 updates, complete checkpoints and fixed
+sampling every2000 updates. Approximately0.94 slice epochs, not proof of convergence.
+Queue position and completion time are unknown. No validation/test evaluation.

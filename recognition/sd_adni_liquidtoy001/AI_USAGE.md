@@ -70,3 +70,12 @@ Pilot629919 completed with exit0:0 in2m15s. Codex retrieved private artifacts,
 verified actual traces/paired noise/file hashes and inspected all three grids.
 Observed appearance changes and persistent structural failures are recorded in the
 ledger without claiming medical validity. Student verification remains pending.
+
+## 2026-10-04 — Queue full-split experiment
+
+At the student's explicit request, Codex inspected live Slurm/account/QoS/storage,
+recorded the long-run protocol, adapted an isolated trainer, ran local Ruff/syntax
+and remote Python/shell syntax checks, and submitted gate629930 plus dependent
+training629931. Preserved accepted pilot/smoke code and frozen queued source.
+Full-split shuffled order and stage checkpoints are included in the resume contract.
+Student review pending; queue submission is not training or quality acceptance.
