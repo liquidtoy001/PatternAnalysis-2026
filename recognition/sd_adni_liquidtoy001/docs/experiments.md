@@ -125,3 +125,10 @@ environment snapshot and aggregate acceptance are in docs. No medical images or
 patient-level manifests are uploaded to the website or public repository.
 The HTML is updated with these measured states. Formal baseline/adaptation,
 generation evaluation, and signal-driven checkpoint recovery remain outstanding.
+
+## Paired generation pilot submitted — 4 October 2026
+
+Job629919: a100-test, one GPU,20-minute wall-time cap. Protocol is in
+pilot-protocol.md. Selected32 training patients (16AD/16NC),200 updates, fixed
+8-image DDIM grids at steps0/100/200. Checkpoint100 resumes in a new process.
+Submission is not success; results are pending. Held-out test data stays sealed.

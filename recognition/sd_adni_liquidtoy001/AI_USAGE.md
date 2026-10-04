@@ -56,3 +56,12 @@ The restart comparator used real checkpoints and included intentional corruption
 controls. Raw medical artifacts remain ignored/private; aggregate evidence was
 used for the learning website. Student review is pending. This is engineering
 acceptance, not a successful formal generation experiment.
+
+## 2026-10-04 — Paired 200-step pilot
+
+Codex read assessment Section2.4, authored the pre-run pilot protocol and adapted
+an isolated copy of the accepted smoke trainer for 32 training patients and200
+updates, with deterministic shuffled order and fixed DDIM sampling at0/100/200.
+The original smoke code is unchanged. Local Ruff and syntax checks passed; remote
+Python/shell syntax checks passed. Submitted job629919. Execution and visual
+acceptance are pending; student code/protocol review remains pending.

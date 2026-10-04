@@ -2,7 +2,10 @@
 
 COMP3710 final report project by liquidtoy001.
 
-**Status: initial read-only Rangpur/data audit complete. No model training or evaluation has been completed.** The supplied train/test directories share 216 patients; a patient-independent project split is required. Home has approximately 2.20 GiB free, so persistent model/checkpoint storage must be resolved before training.
+**Status (4 October 2026): patient-independent data acceptance, VAE diagnostics,
+and eight-step LoRA restart acceptance passed. Pilot job 629919 has been submitted;
+its 200-step generation experiment is pending verification. Formal baseline and
+held-out quality evaluation are not complete.**
 
 This project will investigate whether adapting a pretrained latent diffusion model to ADNI brain MRI improves structural fidelity and distribution coverage without increasing evidence of training-image memorization. The intended output is a research prototype and an evidence-based assessment, not a clinically validated generator.
 
@@ -10,7 +13,7 @@ This project will investigate whether adapting a pretrained latent diffusion mod
 
 Use the course ADNI dataset at `/home/groups/comp3710/ADNI` on Rangpur. Audit patient identifiers before defining patient-independent training, validation, and test splits. Check reconstruction through the pretrained VAE before training the denoising model. Compare an implemented simple generative baseline, the unadapted diffusion model, and the adapted model using the same evaluation protocol.
 
-The initial candidate is an SD 1.x-scale model with a frozen VAE and text encoder. LoRA is a candidate for the first training smoke test; its suitability as the main assessed implementation and the permitted pretrained-library scope must be clarified with the tutor. The exact checkpoint, revision, conditioning scheme, and final adaptation method are not yet selected.
+The initial candidate is an SD 1.x-scale model with a frozen VAE and text encoder. LoRA is a candidate for the first training smoke test; its suitability as the main assessed implementation and the permitted pretrained-library scope must be clarified with the tutor. The bounded pilots use pinned SD1.5, AD/NC text prompts and rank4 LoRA; the final adaptation method remains open.
 
 ## Project records
 
@@ -30,7 +33,7 @@ An eight-step LoRA engineering diagnostic passed continuous-versus-restarted acc
 
 ## Artificial Intelligence Usage Disclosure
 
-OpenAI Codex assisted with interpreting the supplied assessment, discussing model and compute choices, drafting project documentation and Git configuration, and implementing/executing a read-only dataset audit. The assistant checked the local assessment text, repository state, remote resource information, and metadata-backed split overlap. The audit produced aggregate observations; no training or model-evaluation results exist yet.
+OpenAI Codex assisted with interpreting the supplied assessment, discussing model and compute choices, drafting project documentation and Git configuration, and implementing/executing a read-only dataset audit. The assistant checked the local assessment text, repository state, remote resource information, and metadata-backed split overlap. Subsequent data/VAE checks and eight-step training/restart results are recorded in the experiment ledger. Formal generation evaluation is still outstanding.
 
 The student must review these documents and verify all subsequent code, equations, metrics, and experimental claims. The [AI assistance record](AI_USAGE.md) will track assistance and verification as development proceeds; student verification will only be recorded once performed.
 
