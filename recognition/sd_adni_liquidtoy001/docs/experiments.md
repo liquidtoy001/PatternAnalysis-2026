@@ -191,3 +191,14 @@ not established. Next priority is inference parity against the official pipeline
 and controlled resolution/guidance comparisons, followed by training-data visual
 inspection and nearest-neighbor audit. Do not simply infer that more steps will
 resolve the artifacts. No new long job submitted during this verification.
+
+## Inference audit submitted — 5 October 2026
+
+Job632530 in a100-test is RUNNING on a100-a. Protocol recorded before execution
+in inference-audit-protocol.md. No optimizer updates and no held-out data.
+The official pipeline is compared against four historical quantized images and
+then used for16 fixed factorial samples. A mismatch is diagnostic evidence, not
+a reason to silently loosen tolerances. In particular, the historical loop casts
+UNet output tofloat32 before the scheduler; the official mixed-precision path may
+retainbf16 there. If outputs differ, distinguish arithmetic precision from sampler
+logic before attributing generation artifacts to an implementation error.

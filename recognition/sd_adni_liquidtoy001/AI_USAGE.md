@@ -86,3 +86,10 @@ Codex checked Slurm completion for629931, retrieved all private outputs, verifie
 report/trace/image consistency and inspected the final uncurated sample grid.
 Recorded persistent failures without claiming anatomical or clinical validity.
 Student review remains pending.
+
+## 2026-10-05 — Official inference diagnostic
+
+Codex consulted official Diffusers API/source, implemented a fixed-checkpoint
+pipeline comparison and resolution/guidance experiment, ran Ruff and Python/shell
+syntax checks, and submitted632530. All generated probes will be retained.
+Comparison and quality findings pending; student verification pending.
