@@ -79,3 +79,10 @@ and remote Python/shell syntax checks, and submitted gate629930 plus dependent
 training629931. Preserved accepted pilot/smoke code and frozen queued source.
 Full-split shuffled order and stage checkpoints are included in the resume contract.
 Student review pending; queue submission is not training or quality acceptance.
+
+## 2026-10-05 — Long-run artifact verification
+
+Codex checked Slurm completion for629931, retrieved all private outputs, verified
+report/trace/image consistency and inspected the final uncurated sample grid.
+Recorded persistent failures without claiming anatomical or clinical validity.
+Student review remains pending.

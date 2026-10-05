@@ -174,3 +174,20 @@ Gate629930 COMPLETED in46s, exit0:0. Full state comparison passed with final
 adapter max difference0.0; corruption negative controls rejected. Acceptance is
 saved in full-gate-2026-10-04.json. Long job629931 dependency is satisfied and its
 latest queue reason is Priority, not a failed test or missing GPU request.
+
+## Long run629931 completed — verified5 October2026
+
+Slurm COMPLETED, exit0:0, elapsed1h21m39s,20000 steps. Retrieved all ten
+stage directories (approximately140MiB) including full checkpoints to ignored
+outputs/full-629931. Verified report step counts, checkpoint byte sizes, finite
+loss/gradient traces, matching contracts and all resumed trace prefixes, and all
+88 generated PNG hashes with matching initial noise across stages. This is artifact
+and trace verification, not a new continuous20000-step equivalence test.
+
+Inspected the final eight-image uncurated grid: brain-like textures persist, but
+fragmented/collage structures and background block artifacts remain. Matched-seed
+AD/NC images look very similar. Generation quality is not accepted. Causes are
+not established. Next priority is inference parity against the official pipeline
+and controlled resolution/guidance comparisons, followed by training-data visual
+inspection and nearest-neighbor audit. Do not simply infer that more steps will
+resolve the artifacts. No new long job submitted during this verification.
