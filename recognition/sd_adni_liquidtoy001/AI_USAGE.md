@@ -93,3 +93,8 @@ Codex consulted official Diffusers API/source, implemented a fixed-checkpoint
 pipeline comparison and resolution/guidance experiment, ran Ruff and Python/shell
 syntax checks, and submitted632530. All generated probes will be retained.
 Comparison and quality findings pending; student verification pending.
+
+Both inference jobs completed:632530 (1m57s) and precision-aligned632535 (26s).
+Codex verified all output hashes and the four exact historical pixel matches after
+aligning the scheduler-input dtype. Inspected all four factorial grids. Improved
+appearance with guidance7.5 is preliminary, not evidence of privacy or coverage.

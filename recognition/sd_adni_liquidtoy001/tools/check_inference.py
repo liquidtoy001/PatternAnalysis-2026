@@ -33,6 +33,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--align-scheduler-precision", action="store_true")
+    parser.add_argument("--parity-only", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     torch.manual_seed(3710)
@@ -114,6 +116,15 @@ def main():
     for key, param in adapter.items():
         param.copy_(saved["adapter"][key])
     unet.eval().requires_grad_(False)
+    if args.align_scheduler_precision:
+        # Pipeline requests return_dict=False. Match the historical explicit
+        # prediction.float() boundary without changing learned weights.
+        def scheduler_input_float32(module, inputs, output):
+            if not isinstance(output, tuple):
+                raise TypeError("Expected pipeline UNet tuple output")
+            return tuple(value.float() for value in output)
+
+        unet.register_forward_hook(scheduler_input_float32)
     noise_schedule = DDPMScheduler.from_pretrained(
         model, subfolder="scheduler", local_files_only=True
     )
@@ -131,8 +142,8 @@ def main():
     records = []
     parity = []
     started = time.perf_counter()
-    for size in (256, 512):
-        for guidance in (1.0, 7.5):
+    for size in (256,) if args.parity_only else (256, 512):
+        for guidance in (1.0,) if args.parity_only else (1.0, 7.5):
             grid = Image.new("RGB", (size * 2, (size + 24) * 2), "white")
             draw = ImageDraw.Draw(grid)
             for row, label in enumerate(("AD", "NC")):
@@ -223,6 +234,8 @@ def main():
                     print(json.dumps(records[-1]), flush=True)
             grid.save(args.output / f"grid-{size}-cfg{guidance}.png")
     report = {
+        "aligned_scheduler_precision": args.align_scheduler_precision,
+        "parity_only": args.parity_only,
         "checkpoint_sha256": digest(args.checkpoint),
         "code_sha256": digest(__file__),
         "prompts": prompts,

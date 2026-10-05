@@ -13,4 +13,4 @@ export OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 PYTHONUNBUFFERED=1
 export HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1 CUBLAS_WORKSPACE_CONFIG=:4096:8
 .venv-train/bin/python tools/check_inference.py \
     --checkpoint ../runs/full20k-20261004/outputs/full-629931/step-20000/checkpoint.pt \
-    --output "outputs/inference-$SLURM_JOB_ID"
+    --output "outputs/inference-$SLURM_JOB_ID" "$@"

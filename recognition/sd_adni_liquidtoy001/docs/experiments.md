@@ -202,3 +202,30 @@ a reason to silently loosen tolerances. In particular, the historical loop casts
 UNet output tofloat32 before the scheduler; the official mixed-precision path may
 retainbf16 there. If outputs differ, distinguish arithmetic precision from sampler
 logic before attributing generation artifacts to an implementation error.
+
+### Inference audit632530 result
+
+COMPLETED, exit0:0,1m57s. Retrieved all16 images and four uncurated grids.
+Verified PNG hashes and identical initial noise across guidance settings within
+each resolution. Four historical pairs do not match exactly: mean absolute pixel
+differences0.93–2.29 on0–255 scale, maximum46–105. A follow-up632535 aligns only
+the UNet-output float32 scheduler boundary and repeats the four historical pairs;
+this distinguishes the suspected precision effect without changing trained weights.
+
+Visual inspection of all four grids: guidance7.5 removes much of the collage and
+background artifacts in these fixed examples at256 and512. Guidance1 at512 is
+heavily textured/fragmented; merely increasing resolution does not fix it.
+The256/guidance7.5 seeds look highly similar. These tiny selected-in-advance grids
+cannot establish distribution coverage, anatomical validity, disease specificity
+or privacy. Do not claim guidance7.5 is optimal or512 is universally better.
+
+Follow-up632535 COMPLETED, exit0:0,26s. After matching the float32 scheduler-input
+boundary, all four historical outputs match the official pipeline pixel-for-pixel
+(max difference0), with identical historical initial-noise hashes. PNG hashes
+verified locally. This strongly supports sampler consistency on the tested cases;
+it does not prove all prompts/settings or intermediate latent equality. The prior
+small mismatch is explained by the controlled precision-boundary change. No weight
+update was needed. The large collage failures remain reproducible with guidance1,
+while guidance7.5 changes sample appearance substantially on this small fixed set.
+Next: broader predeclared seeds, nearest training/validation neighbors, diversity,
+and a separately trained simple baseline. No further long training submitted.
