@@ -229,3 +229,19 @@ update was needed. The large collage failures remain reproducible with guidance1
 while guidance7.5 changes sample appearance substantially on this small fixed set.
 Next: broader predeclared seeds, nearest training/validation neighbors, diversity,
 and a separately trained simple baseline. No further long training submitted.
+
+## Cohort audit and baseline queued — 5 October 2026
+
+Protocol: cohort-baseline-protocol.md, recorded before execution. GPU632557
+produces64 base and64 adapted SD outputs at256/guidance7.5, with predeclared
+seeds37200–37231. CPU632558 depends on it and performs private full/matched
+train/validation nearest-neighbor and diversity diagnostics. Test remains sealed.
+
+Baseline gate632563 was cancelled while pending to replace it with an immutable
+source checkout after lint cleanup. Replacement gate632569 and dependent5-epoch
+baseline632570 use ~/comp3710-sd-audit/runs/baseline128-20261005 with recorded
+source hashes. Basic conditional conv VAE,128 native pixels,64 latent dimensions,
+no pretrained weights. Epoch checkpoints support bounded loss on interruption;
+no emergency signal-save claimed. Gate tests actual updates and exact save/reload
+inference, not full interrupted-training trajectory equivalence. Submission and
+static checks are not successful model or metric results.

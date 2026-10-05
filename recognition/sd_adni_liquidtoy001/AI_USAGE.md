@@ -98,3 +98,13 @@ Both inference jobs completed:632530 (1m57s) and precision-aligned632535 (26s).
 Codex verified all output hashes and the four exact historical pixel matches after
 aligning the scheduler-input dtype. Inspected all four factorial grids. Improved
 appearance with guidance7.5 is preliminary, not evidence of privacy or coverage.
+
+## 2026-10-05 — Cohort, nearest-neighbor audit and baseline
+
+Codex authored the pre-run protocol, expanded fixed-seed generation, implemented
+pixel-distance audits with an exact-copy positive control, and wrote a small
+from-scratch conditional convolutional VAE using the standard analytic Gaussian
+KL objective. Local Ruff/syntax checks and shell validation preceded submission.
+Jobs632557/632558 cover SD generation/audit;632569/632570 gate and train the
+baseline. All conclusions await real outputs and student review. Patient-level
+nearest-neighbor records stay in ignored private outputs.
