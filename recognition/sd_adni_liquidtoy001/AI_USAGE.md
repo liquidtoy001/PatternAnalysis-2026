@@ -125,3 +125,11 @@ Reviewed all five panels and separated three observed visual failure types from
 two unconfirmed risk probes. Updated the private learning website with aggregate
 evidence and explicit limitations. Patient images/identifiers remain excluded
 from Git and Site. Student interpretation and final report review remain pending.
+
+## 2026-10-07 — Appearance diagnostics
+
+Codex formalized exploratory color/border/edge measurements, documented the
+protocol, implemented and submitted CPU job636215, verified source hashes and
+successful outputs, and interpreted aggregate and case-level results. Real
+reference calibration completed7s, exit0:0. No test image was opened. These are
+descriptive proxies, not anatomical or privacy metrics. Student review pending.

@@ -297,3 +297,35 @@ blur are observed failures; minimum-distance and repeated-shape examples are
 unconfirmed risk probes. Causes remain hypotheses requiring controlled checks.
 See calibration-2026-10-06.json and failure-autopsies-2026-10-06.md. No test-set
 evaluation performed. Next: foreground/color/edge and feature-space diagnostics.
+
+## 2026-10-07 — Appearance reference calibration
+
+CPU job636215 COMPLETED in7s, exit0:0. All192 generated images and102 validation
+images passed recorded SHA256 checks; downloaded report script hash matches local
+source. No test images read. Local refactoring reproduced all nine earlier
+aggregate means within1e-12. Ruff and shell syntax checks passed.
+
+| Group | n | Mean color range | Mean outer-border intensity | Mean edge difference |
+| --- | ---: | ---: | ---: | ---: |
+| Original SD | 64 | 0.344538 | 0.439551 | 0.060737 |
+| Adapted SD | 64 | 0.020839 | 0.059221 | 0.022961 |
+| Simple VAE | 64 | 0 | 0.000077 | 0.007563 |
+| Real validation | 102 | 0 | 0.000000100 | 0.017551 |
+
+AD and NC separately show the same edge ordering. Validation edge means are
+0.017292/0.017674; VAE0.007623/0.007502; adapted0.023217/0.022704.
+The results support the smoothing observation, not anatomical-quality rankings.
+Native128 vs256, slice position, model architecture and losses remain confounded.
+Single-channel real/VAE outputs are grayscale by construction, not a learned win.
+Border is a spatial proxy, affected by padding; no segmentation was performed.
+
+F1 border0.411542 versus real-reference maximum0.000004085 corroborates the
+background mismatch. F2 color0.021035 confirms non-grayscale output, but does not
+localize the cyan patch or establish its cause. F4 edge0.005648 is below the real
+reference range0.010177-0.025855, consistent with smoothing; not a diagnostic
+threshold. F3/F5 remain unconfirmed risk probes. No retraining decision yet.
+
+Next controlled step: compare the existing fixed-seed CFG/resolution probes with
+these same descriptive measures, then choose any new sampling ablation. Learned
+features, foreground segmentation, interpolation and final test evaluation remain
+unperformed. See appearance-protocol.md and appearance-result-2026-10-07.json.
