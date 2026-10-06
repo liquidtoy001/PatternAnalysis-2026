@@ -35,7 +35,12 @@ def main():
     parser.add_argument("--align-scheduler-precision", action="store_true")
     parser.add_argument("--parity-only", action="store_true")
     parser.add_argument("--base", action="store_true")
+    parser.add_argument("--guidance", type=float, nargs="+", default=[7.5])
     args = parser.parse_args()
+    if len(set(args.guidance)) != len(args.guidance) or any(
+        not 1.0 <= value <= 20.0 for value in args.guidance
+    ):
+        parser.error("Guidance values must be distinct and between1 and20")
     args.output.mkdir(parents=True, exist_ok=False)
     torch.manual_seed(3710)
     torch.cuda.manual_seed_all(3710)
@@ -143,7 +148,7 @@ def main():
     records = []
     started = time.perf_counter()
     for size in (256,):
-        for guidance in (7.5,):
+        for guidance in args.guidance:
             grid = Image.new("RGB", (size * 8, (size + 24) * 8), "white")
             draw = ImageDraw.Draw(grid)
             for row, label in enumerate(("AD", "NC")):
@@ -228,7 +233,8 @@ def main():
         "eta": 0.0,
         "seconds": time.perf_counter() - started,
         "torch": str(torch.__version__),
-        "scope": "64 predeclared images; exploratory train/validation audit; no test evaluation",
+        "guidance_values": args.guidance,
+        "scope": f"{64 * len(args.guidance)} predeclared images; no test evaluation",
     }
     (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
 

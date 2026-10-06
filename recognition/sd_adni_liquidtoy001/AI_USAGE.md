@@ -140,3 +140,11 @@ Codex wrote and ran audit_sampling.py on16 hash-verified existing images, checke
 factorial completeness and paired initial noise, and documented both improvements
 and contrary color evidence. Ruff passed. No new training/generation was run;
 student review remains pending.
+
+## 2026-10-07 — Controlled CFG sweep preparation
+
+Codex added a validated multi-guidance option to the existing generator, retained
+its7.5 default, and documented the192-image protocol before running it. Local
+Ruff, formatting, syntax and diff checks passed. Regeneration of7.5 is intended
+for historical parity checking, not assumed equivalent before outputs arrive.
+Student interpretation remains pending.

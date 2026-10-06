@@ -359,3 +359,13 @@ CFG only (e.g.3,5,7.5). Reuse7.5 outputs only after confirming identical pipelin
 and noise contracts. Retain every image and report paired changes, including
 known failure seeds37220/37217. This is a proposed experiment, not submitted.
 No test images used; no new GPU job launched in this analysis.
+
+## 2026-10-07 — CFG sweep submitted
+
+Job636273: a100-test, oneGPU,20-minute limit. Fixed checkpoint,256/DDIM30/eta0,
+aligned precision,32 seeds and2 labels, CFG3/5/7.5 (192 outputs). See
+cfg-sweep-protocol.md. Regenerate7.5 for subsequent historical parity checking.
+Local Ruff/format/syntax checks and remote shell syntax passed. A login-node
+--help import stalled in I/O; stopped that exact invocation before submission.
+Model import/execution remains to be verified by the scheduled job. No results
+or best setting claimed at submission; test data stays sealed.
