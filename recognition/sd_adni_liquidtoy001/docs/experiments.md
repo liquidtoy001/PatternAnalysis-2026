@@ -245,3 +245,40 @@ no pretrained weights. Epoch checkpoints support bounded loss on interruption;
 no emergency signal-save claimed. Gate tests actual updates and exact save/reload
 inference, not full interrupted-training trajectory equivalence. Submission and
 static checks are not successful model or metric results.
+
+## Cohort and baseline results verified — 6 October 2026
+
+632557 COMPLETED6m08s;632558 COMPLETED53s;632569 COMPLETED8s;632570 COMPLETED3m02s;
+all exit0:0. Retrieved128 SD images,64 baseline images and all five baseline
+checkpoints. Verified192 image hashes, SD initial-noise pairing, five epochs each
+covering21280 training samples, finite objectives and final checkpoint SHA256.
+Supplementary baseline CPU audit635709 completed51s, exit0:0, using the same
+previously recorded metric/reference protocol. Private neighbors remain ignored.
+
+| Model | Matched train NN mean RMSE | Matched validation NN mean RMSE | Generated pairwise mean RMSE |
+| --- | ---: | ---: | ---: |
+| Base SD | 0.493368 | 0.495440 | 0.442523 |
+| Adapted SD | 0.130497 | 0.131289 | 0.182098 |
+| Small VAE | 0.077038 | 0.077355 | 0.117431 |
+
+References:102 patients per split (33AD/69NC), one deterministic slice each.
+All distances are grayscale64 pixel RMSE. Exact-copy reference controls passed.
+The full-reference adapted-training minimum distance0.07021 is nonzero, but this
+cannot exclude approximate memorization. Similar matched train/validation means
+are a limited observation, not a privacy guarantee or statistical equivalence.
+
+Visual review of all three uncurated grids: base SD produces colorful/illustrative
+or collage-like images far from the target appearance; adapted SD produces much
+sharper, similar brain-like structures with residual colored/background artifacts;
+small VAE generates blurred structures. The blurred baseline wins low-resolution
+RMSE. This is evidence that this metric alone is insufficient to rank fine-detail
+quality, not evidence that SD is categorically better. Pairwise variability of
+invalid base outputs is not useful anatomical diversity. Neither disease-label
+control nor anatomical validity is established by these grids.
+
+Baseline1268961 parameters;5 epochs=106400 training-image exposures, compared with
+SD20000 updates at batch1. Baseline native128 versus SD256 further limits direct
+fairness. Training VAE objective declined224.81->89.90, but this is not held-out
+validation quality. Next: real-vs-real distance calibration, foreground/feature
+metrics and private nearest-neighbor visual panels, then3–5 representative failure
+analyses. Keep the test split untouched until final evaluation protocol is fixed.

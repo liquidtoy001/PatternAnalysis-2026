@@ -108,3 +108,11 @@ KL objective. Local Ruff/syntax checks and shell validation preceded submission.
 Jobs632557/632558 cover SD generation/audit;632569/632570 gate and train the
 baseline. All conclusions await real outputs and student review. Patient-level
 nearest-neighbor records stay in ignored private outputs.
+
+## 2026-10-06 — Cohort and baseline acceptance
+
+Codex verified all four jobs completed, downloaded private artifacts, checked192
+PNG hashes and final VAE checkpoint hash, reviewed all three full grids, and ran
+baseline audit635709 under the existing metric protocol. Recorded the blurred
+baseline's better pixel RMSE and limitations of image-distance/privacy claims.
+No patient-level neighbors were added to Git. Student review remains pending.
