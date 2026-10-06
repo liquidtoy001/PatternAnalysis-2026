@@ -133,3 +133,10 @@ protocol, implemented and submitted CPU job636215, verified source hashes and
 successful outputs, and interpreted aggregate and case-level results. Real
 reference calibration completed7s, exit0:0. No test image was opened. These are
 descriptive proxies, not anatomical or privacy metrics. Student review pending.
+
+## 2026-10-07 — Existing factorial probe analysis
+
+Codex wrote and ran audit_sampling.py on16 hash-verified existing images, checked
+factorial completeness and paired initial noise, and documented both improvements
+and contrary color evidence. Ruff passed. No new training/generation was run;
+student review remains pending.

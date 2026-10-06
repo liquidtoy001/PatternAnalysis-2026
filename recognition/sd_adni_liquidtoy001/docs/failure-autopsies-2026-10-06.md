@@ -54,3 +54,33 @@ Next controlled step: compare the existing fixed-seed CFG/resolution probes with
 these same descriptive measures, then choose any new sampling ablation. Learned
 features, foreground segmentation, interpolation and final test evaluation remain
 unperformed. See appearance-protocol.md and appearance-result-2026-10-07.json.
+
+## 2026-10-07 — Retrospective sampling appearance comparison
+
+Measured all16 images from job632530. SHA256 verification and complete factorial
+coverage passed. Each within-resolution CFG pair shares its initial-noise hash.
+This is the original unaligned scheduler-precision run; do not merge it with the
+later aligned cohort as though precision were controlled across runs.
+
+| Resolution | CFG | Mean color range | Mean border | Mean edge |
+| --- | ---: | ---: | ---: | ---: |
+| 256 | 1 | 0.010626 | 0.178816 | 0.030590 |
+| 256 | 7.5 | 0.016531 | 0.004558 | 0.022557 |
+| 512 | 1 | 0.007888 | 0.398652 | 0.041371 |
+| 512 | 7.5 | 0.009361 | 0.051831 | 0.021844 |
+
+All eight CFG pairs decrease border and edge measures. Seven increase color
+range. This refines the visual statement that higher guidance reduces artifacts:
+it improves the border proxy here but does not consistently improve grayscale
+fidelity. Edge decrease is not itself anatomical improvement. There are only two
+independent seeds; AD/NC share noise, so these are not eight independent replicates.
+Across resolutions noise tensors differ in shape; equal seed is not equal latent.
+512 does not eliminate border mismatch in these samples. No optimal CFG, causal
+training defect, or need for retraining is established.
+
+Next bounded experiment should hold aligned precision, checkpoint, DDIM30 and
+256 resolution fixed, use all32 existing cohort seeds and both labels, and vary
+CFG only (e.g.3,5,7.5). Reuse7.5 outputs only after confirming identical pipeline
+and noise contracts. Retain every image and report paired changes, including
+known failure seeds37220/37217. This is a proposed experiment, not submitted.
+No test images used; no new GPU job launched in this analysis.
