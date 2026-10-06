@@ -282,3 +282,18 @@ fairness. Training VAE objective declined224.81->89.90, but this is not held-out
 validation quality. Next: real-vs-real distance calibration, foreground/feature
 metrics and private nearest-neighbor visual panels, then3–5 representative failure
 analyses. Keep the test split untouched until final evaluation protocol is fixed.
+
+## 2026-10-06 — Real-reference calibration and case inspection
+
+CPU job635718 completed43s, exit0:0. Matched queries contain102 patients per
+split (33AD/69NC), one deterministic slice each. Training queries exclude all
+images from the same patient. Grayscale64 RMSE: real validation to full training
+mean0.073101; real training to other-patient full training mean0.076297; real
+validation to matched training mean0.091846. Real matched-set pairwise means:
+train0.161217, validation0.152429. These are context, not privacy thresholds.
+
+Five private panels inspected: gray background, colored artifact, and simple-VAE
+blur are observed failures; minimum-distance and repeated-shape examples are
+unconfirmed risk probes. Causes remain hypotheses requiring controlled checks.
+See calibration-2026-10-06.json and failure-autopsies-2026-10-06.md. No test-set
+evaluation performed. Next: foreground/color/edge and feature-space diagnostics.

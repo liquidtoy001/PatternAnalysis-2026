@@ -116,3 +116,12 @@ PNG hashes and final VAE checkpoint hash, reviewed all three full grids, and ran
 baseline audit635709 under the existing metric protocol. Recorded the blurred
 baseline's better pixel RMSE and limitations of image-distance/privacy claims.
 No patient-level neighbors were added to Git. Student review remains pending.
+
+## 2026-10-06 — Real-reference calibration and failure panels
+
+Codex implemented patient-excluding real-reference calibration and assembled five
+private generated/train/validation panels. Job635718 completed43s, exit0:0.
+Reviewed all five panels and separated three observed visual failure types from
+two unconfirmed risk probes. Updated the private learning website with aggregate
+evidence and explicit limitations. Patient images/identifiers remain excluded
+from Git and Site. Student interpretation and final report review remain pending.
