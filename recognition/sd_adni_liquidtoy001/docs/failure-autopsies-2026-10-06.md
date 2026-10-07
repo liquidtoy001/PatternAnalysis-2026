@@ -84,3 +84,42 @@ CFG only (e.g.3,5,7.5). Reuse7.5 outputs only after confirming identical pipelin
 and noise contracts. Retain every image and report paired changes, including
 known failure seeds37220/37217. This is a proposed experiment, not submitted.
 No test images used; no new GPU job launched in this analysis.
+
+## 2026-10-07 — CFG sweep acceptance and visual review
+
+Job636273 completed9m06s, exit0:0. Verified all192 PNG hashes and64 matched-noise
+triplets. All64 regenerated CFG7.5 PNG hashes equal historical cohort632557.
+Scheduler contracts match after sorting only the metadata list of defaulted keys.
+Full three64-image grids and six individual F1/F2 outputs were visually reviewed.
+
+| CFG | Mean color | Mean border | Mean edge |
+| --- | ---: | ---: | ---: |
+| 3 | 0.021165 | 0.204864 | 0.022431 |
+| 5 | 0.017498 | 0.109868 | 0.023333 |
+| 7.5 | 0.020839 | 0.059221 | 0.022961 |
+
+Paired result:3->5 lowers border in64/64 samples,5->7.5 in63/64. In contrast,
+3->5 lowers color in only23/64 samples (11/32 seed blocks); its lower mean is not
+majority improvement.5->7.5 increases color in45/64 samples, with23/32 seed blocks
+increasing. AD/NC share noise, so block counts avoid pretending64 independent seeds.
+No inferential significance test or anatomical-quality ranking is claimed.
+
+F1 AD37220: border0.57695/0.52643/0.41154 at CFG3/5/7.5. Gray background remains
+in all three. CFG3 also has visibly textured background; higher guidance suppresses
+some texture while leaving the brightness mismatch. F2 NC37217: color range
+0.00769/0.00854/0.02104; cyan patch is conspicuous at7.5 and not conspicuous at3/5.
+The observed dependence is on guidance within this fixed setup; it does not identify
+the learned mechanism or establish that retraining would fix it.
+
+The grids retain similar gross orientations/shapes and paired AD/NC resemblance.
+No label-conditioned disease fidelity or mode-collapse conclusion follows from
+visual resemblance. Existing F3/F5 remain unconfirmed risk probes.
+
+Decision: retain7.5 as the existing comparison reference, with5 as a documented
+tradeoff, not a newly proven optimum. Stop expanding CFG search for now. Prioritize
+remaining required evidence: feature-space coverage/label sensitivity, interpolation,
+and student check-off/implementation scope. Do not replace formal held-out validation
+with selection on these32 diagnostic seeds. Test remains sealed. No new job submitted.
+
+Reproduce with tools/audit_cfg_sweep.py; outputs stay private, aggregate evidence
+is in docs/cfg-sweep-result-2026-10-07.json. Ruff passed on the real-data audit tool.

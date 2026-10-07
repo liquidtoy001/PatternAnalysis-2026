@@ -148,3 +148,10 @@ its7.5 default, and documented the192-image protocol before running it. Local
 Ruff, formatting, syntax and diff checks passed. Regeneration of7.5 is intended
 for historical parity checking, not assumed equivalent before outputs arrive.
 Student interpretation remains pending.
+
+## 2026-10-07 — CFG sweep acceptance
+
+Codex checked192 outputs, historical parity and noise pairing, reviewed all three
+full grids plus six individual case images, implemented reproducible paired
+summaries, and corrected a mean-only interpretation using per-sample/seed-block
+counts. Student interpretation and clinical/anatomical validation remain pending.
