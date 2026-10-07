@@ -176,3 +176,11 @@ Codex rechecked PDF2.4, documented remaining SSIM/real-synthetic interpolation
 requirements, implemented frozen VAE extraction and bidirectional distances,
 submitted639765, verified transferred hashes, and rendered/inspected joint t-SNE.
 Feature-space conclusions are explicitly encoder-dependent; student review pending.
+
+## 2026-10-07 — SSIM and encoded paths
+
+Codex checked official scikit-image documentation, installed pinned0.25.2 into
+the existing E-drive environment (cache on E), wrote pairing/interpolation
+protocols, submitted639777 and evaluated all192 generated images locally. Reviewed
+both complete encoded paths and disclosed SD's below-target SSIM and blurred
+intermediate frames. Student understanding and final interpretation remain pending.

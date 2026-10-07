@@ -479,3 +479,39 @@ PDF2.4 checked: initial-noise interpolation alone does not complete the requeste
 synthetic/training-image interpolation. SSIM with an explicit pairing protocol and
 encoded real/synthetic interpolation still remain; final test is sealed. Do not
 label the entire evaluation complete. Student interpretation pending.
+
+## 2026-10-07 — Explicit SSIM and encoded real/synthetic paths
+
+Job639777 completed13s,exit0:0; exported204 preprocessed private real references
+and two five-frame VAE-code interpolation paths, with original endpoints shown
+separately. Extractor code hash verified. SSIM computed locally using pinned
+scikit-image0.25.2; actual-reference identity control returned1. Ruff passed.
+
+| Model | Fixed-reference mean SSIM | Feature-nearest mean SSIM | Nearest fraction>0.6 |
+| --- | ---: | ---: | ---: |
+| Original SD | 0.088068 | 0.087000 | 0/64 |
+| Adapted SD | 0.350366 | 0.376754 | 23/64 |
+| Simple VAE | 0.672548 | 0.726595 | 64/64 |
+
+Real validation->same-label training feature-neighbor mean0.709904 (102 queries).
+Under BOTH stated pairings, adapted SD's mean falls short of the course's0.6
+reference target and below the simple VAE. Do not present a pass or silently alter
+pairing to obtain a higher score. Native resolution, smoothing, black background,
+alignment and arbitrary correspondence limit interpretation; low SD scores and
+its visibly sharper outputs must both be reported. Reference selection used VAE
+features before SSIM, not SSIM maximization. No ground-truth counterpart exists
+for unconditional outputs. Scores are not clinical judgments or privacy guarantees.
+
+Both encoded paths inspected: NC37215 and AD37220 to their same-label feature
+nearest TRAIN reference. Intermediate frames show blurred/blended textures, with
+structure changing between endpoints; no claim of anatomical continuity. VAE
+endpoint generated reconstruction MSE0.000604/0.000546, training reconstruction
+MSE0.004103/0.003971. Endpoints therefore reconstruct inputs rather than exactly
+reproducing their pixels. This is posterior-mean interpolation in the frozen VAE,
+not reverse-diffusion inversion. It does not disprove memorization.
+
+Original/reference images and per-image SSIM stay private. Both interpolation
+scope and remaining deficiencies should be discussed at check-off. Next: reconcile
+course requirement coverage and prepare the one-page feasibility discussion;
+prioritize reviewer-approved changes over open-ended parameter searches. Test
+set remains sealed; no new training submitted on the strength of these scores.
