@@ -408,3 +408,12 @@ with selection on these32 diagnostic seeds. Test remains sealed. No new job subm
 
 Reproduce with tools/audit_cfg_sweep.py; outputs stay private, aggregate evidence
 is in docs/cfg-sweep-result-2026-10-07.json. Ruff passed on the real-data audit tool.
+
+## 2026-10-07 — Interpolation submitted
+
+Job639671 submitted: two noise-seed pairs, five linear mixing coefficients,
+two fixed prompts,20 total images; CFG7.5/256/DDIM30 with aligned precision.
+See interpolation-protocol.md for lower interior variance and endpoint checks.
+Ruff, Python syntax and remote shell syntax passed. No result acceptance yet.
+Private HTML updated with completed appearance/CFG evidence; interpolation remains
+unverified there. No training or test-set evaluation initiated.

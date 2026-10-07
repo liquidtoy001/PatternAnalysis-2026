@@ -155,3 +155,10 @@ Codex checked192 outputs, historical parity and noise pairing, reviewed all thre
 full grids plus six individual case images, implemented reproducible paired
 summaries, and corrected a mean-only interpretation using per-sample/seed-block
 counts. Student interpretation and clinical/anatomical validation remain pending.
+
+## 2026-10-07 — Website and interpolation preparation
+
+Codex updated the private HTML with measured appearance and paired CFG evidence,
+added an optional initial-noise interpolation mode and a pre-run protocol, and
+submitted639671. Interior noise variance is explicitly disclosed. Endpoint parity
+and visual interpretation await outputs; student review remains pending.

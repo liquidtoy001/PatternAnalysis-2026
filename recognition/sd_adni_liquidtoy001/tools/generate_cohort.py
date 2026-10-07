@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--parity-only", action="store_true")
     parser.add_argument("--base", action="store_true")
     parser.add_argument("--guidance", type=float, nargs="+", default=[7.5])
+    parser.add_argument("--interpolate", action="store_true")
     args = parser.parse_args()
     if len(set(args.guidance)) != len(args.guidance) or any(
         not 1.0 <= value <= 20.0 for value in args.guidance
@@ -149,14 +150,44 @@ def main():
     started = time.perf_counter()
     for size in (256,):
         for guidance in args.guidance:
-            grid = Image.new("RGB", (size * 8, (size + 24) * 8), "white")
+            columns = 5 if args.interpolate else 8
+            label_rows = 2 if args.interpolate else 4
+            grid = Image.new(
+                "RGB", (size * columns, (size + 24) * label_rows * 2), "white"
+            )
             draw = ImageDraw.Draw(grid)
             for row, label in enumerate(("AD", "NC")):
-                for col, seed in enumerate(range(37200, 37232)):
+                samples = (
+                    [
+                        (a, b, t)
+                        for a, b in ((37200, 37201), (37216, 37217))
+                        for t in (0.0, 0.25, 0.5, 0.75, 1.0)
+                    ]
+                    if args.interpolate
+                    else [(s, None, 0.0) for s in range(37200, 37232)]
+                )
+                for col, (seed, end_seed, alpha) in enumerate(samples):
                     generator = torch.Generator(device="cuda").manual_seed(seed)
                     latent = torch.randn(
                         (1, 4, size // 8, size // 8), generator=generator, device="cuda"
                     )
+                    if end_seed is not None:
+                        end = torch.randn(
+                            latent.shape,
+                            device="cuda",
+                            generator=torch.Generator(device="cuda").manual_seed(
+                                end_seed
+                            ),
+                        )
+                        # Preserve endpoints exactly. Interior variance changes under
+                        # linear interpolation and is reported as a limitation.
+                        latent = (
+                            latent
+                            if alpha == 0
+                            else end
+                            if alpha == 1
+                            else (1 - alpha) * latent + alpha * end
+                        )
                     initial_hash = hashlib.sha256(
                         latent.cpu().numpy().tobytes()
                     ).hexdigest()
@@ -194,16 +225,28 @@ def main():
                     )
                     image = Image.fromarray(pixels)
                     name = f"official-{size}-cfg{guidance}-{label}-{seed}.png"
+                    if end_seed is not None:
+                        name = f"interp-{size}-cfg{guidance}-{label}-{seed}-{end_seed}-a{alpha}.png"
                     image.save(args.output / name)
                     grid.paste(
-                        image, ((col % 8) * size, (row * 4 + col // 8) * (size + 24))
+                        image,
+                        (
+                            (col % columns) * size,
+                            (row * label_rows + col // columns) * (size + 24),
+                        ),
                     )
                     draw.text(
                         (
-                            (col % 8) * size + 4,
-                            (row * 4 + col // 8) * (size + 24) + size + 4,
+                            (col % columns) * size + 4,
+                            (row * label_rows + col // columns) * (size + 24)
+                            + size
+                            + 4,
                         ),
-                        f"{label} seed{seed} cfg{guidance}",
+                        (
+                            f"{label} {seed}->{end_seed} a{alpha}"
+                            if end_seed is not None
+                            else f"{label} seed{seed} cfg{guidance}"
+                        ),
                         fill="black",
                     )
                     records.append(
@@ -213,6 +256,9 @@ def main():
                             "guidance": guidance,
                             "label": label,
                             "seed": seed,
+                            "end_seed": end_seed,
+                            "alpha": alpha,
+                            "initial_noise_norm": latent.norm().item(),
                             "initial_noise_sha256": initial_hash,
                             "png_sha256": digest(args.output / name),
                             "peak_allocated_bytes": torch.cuda.max_memory_allocated(),
@@ -234,7 +280,8 @@ def main():
         "seconds": time.perf_counter() - started,
         "torch": str(torch.__version__),
         "guidance_values": args.guidance,
-        "scope": f"{64 * len(args.guidance)} predeclared images; no test evaluation",
+        "interpolation": args.interpolate,
+        "scope": f"{len(records)} predeclared images; no test evaluation",
     }
     (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
 
