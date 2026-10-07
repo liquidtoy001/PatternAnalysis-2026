@@ -162,3 +162,10 @@ Codex updated the private HTML with measured appearance and paired CFG evidence,
 added an optional initial-noise interpolation mode and a pre-run protocol, and
 submitted639671. Interior noise variance is explicitly disclosed. Endpoint parity
 and visual interpretation await outputs; student review remains pending.
+
+## 2026-10-07 — Interpolation acceptance
+
+Codex retrieved639671, verified20 generated images and eight exact historical
+endpoints, inspected all four five-frame paths, and documented the observed
+noise-norm shrinkage and retained artifact. No medical interpretation or proof of
+smoothness/coverage is claimed. Student review remains pending.

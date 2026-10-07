@@ -417,3 +417,27 @@ See interpolation-protocol.md for lower interior variance and endpoint checks.
 Ruff, Python syntax and remote shell syntax passed. No result acceptance yet.
 Private HTML updated with completed appearance/CFG evidence; interpolation remains
 unverified there. No training or test-set evaluation initiated.
+
+## 2026-10-07 — Initial-noise interpolation accepted
+
+Job639671 COMPLETED1m05s,exit0:0. All20 PNG hashes verified; all eight endpoint
+noise hashes and PNG hashes exactly match the accepted historical CFG7.5 cohort.
+Complete four paths inspected at alpha0,.25,.5,.75,1. Reproduce integrity checks
+with tools/audit_interpolation.py (Ruff passed).
+
+Contours, local texture and intensity visibly vary along the four sampled paths.
+Five positions cannot establish continuous perceptual smoothness or anatomical
+validity. NC37216->37217 ends with the known cyan artifact; interpolation does not
+repair it. Gross orientation remains similar across the displayed paths. This is
+not evidence of disease-state interpolation, semantic coverage, or non-memorization.
+
+Endpoint noise norms are63.74-64.51; midpoint norms45.26/45.69. Linear mixing
+therefore changes noise magnitude as well as direction. Interior appearance cannot
+be attributed to direction alone. AD/NC use the same two noise paths; there are
+two independent endpoint pairs, not four independent noise experiments.
+
+The narrow initial-noise interpolation diagnostic is complete; feature-space
+coverage, label fidelity, and final test evaluation remain unperformed. Keep these
+requirements separate. Next priority is a documented feature-space protocol with
+real validation references, rather than further cosmetic CFG search. No new GPU
+job submitted in this acceptance step. Student review remains pending.
