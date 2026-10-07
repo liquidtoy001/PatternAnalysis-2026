@@ -441,3 +441,41 @@ coverage, label fidelity, and final test evaluation remain unperformed. Keep the
 requirements separate. Next priority is a documented feature-space protocol with
 real validation references, rather than further cosmetic CFG search. No new GPU
 job submitted in this acceptance step. Student review remains pending.
+
+## 2026-10-07 — Frozen VAE feature diagnostic
+
+Job639765 COMPLETED19s,exit0:0.396 images ->256 features. Source-code hash matches
+report; downloaded feature and private-row SHA256 match remote files. Reference
+selection and every input image hash verified during extraction. No test images.
+
+| Query/reference | Mean VAE-feature RMSE |
+| --- | ---: |
+| Validation ->102 matched training references | 0.899889 |
+| Validation ->64 label-count-matched training references | 0.953590 |
+| Validation ->64 original SD samples | 6.260788 |
+| Validation ->64 adapted SD samples | 1.265907 |
+| Validation ->64 simple VAE samples | 2.193512 |
+
+This is a finite-sample reverse nearest-distance diagnostic, not a coverage percent.
+Adapted SD is closer than the simple VAE by this directional measure but remains
+farther than the real-reference context. Forward generated->validation means:
+base7.327543, adapted1.926602, baseline1.871396. Forward and reverse directions
+answer different questions; do not claim SD wins every measure. Class-stratified
+results are preserved in feature-result-2026-10-07.json.
+
+Joint t-SNE (396 points,perplexity30,seed3710,PCA init,1000 iterations) was rendered
+and inspected. Baseline forms a separate region; base SD is also separated; adapted
+samples overlap parts of the real projection and also extend away from it. These
+are visualization observations, not numeric overlap/coverage evidence. AD/NC
+colors for generated samples are prompt labels, not verified disease labels.
+
+SD VAE is shared with the generator, trained for compression rather than clinical
+assessment; pooled latents retain alignment/background/domain bias. The comparison
+is supplementary and cannot establish anatomical quality, privacy, or AD control.
+Plot and private feature arrays remain in outputs/features-639765. No patient
+identifiers are included in the aggregate report or plot labels.
+
+PDF2.4 checked: initial-noise interpolation alone does not complete the requested
+synthetic/training-image interpolation. SSIM with an explicit pairing protocol and
+encoded real/synthetic interpolation still remain; final test is sealed. Do not
+label the entire evaluation complete. Student interpretation pending.

@@ -169,3 +169,10 @@ Codex retrieved639671, verified20 generated images and eight exact historical
 endpoints, inspected all four five-frame paths, and documented the observed
 noise-norm shrinkage and retained artifact. No medical interpretation or proof of
 smoothness/coverage is claimed. Student review remains pending.
+
+## 2026-10-07 — Frozen feature evaluation
+
+Codex rechecked PDF2.4, documented remaining SSIM/real-synthetic interpolation
+requirements, implemented frozen VAE extraction and bidirectional distances,
+submitted639765, verified transferred hashes, and rendered/inspected joint t-SNE.
+Feature-space conclusions are explicitly encoder-dependent; student review pending.
