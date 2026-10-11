@@ -1,5 +1,6 @@
 """Explicit SSIM pairing for generated images; neither pair is ground truth."""
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -36,23 +37,49 @@ def summarize(values):
 
 
 def main():
-    output = Path("outputs/encoded-639777")
-    refs = np.load(output / "private-reference-images.npz")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--features", type=Path, default=Path("outputs/features-639765")
+    )
+    parser.add_argument(
+        "--references", type=Path, default=Path("outputs/encoded-639777")
+    )
+    parser.add_argument("--output", type=Path, help="default: the references folder")
+    parser.add_argument(
+        "--extra",
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="additional generated cohort folder containing report.json",
+    )
+    args = parser.parse_args()
+    output = args.output or args.references
+    output.mkdir(parents=True, exist_ok=True)
+    refs = np.load(args.references / "private-reference-images.npz")
     images = {
         int(i): x.astype(np.float64) / 255
         for i, x in zip(refs["indices"], refs["images"])
     }
-    features = np.load("outputs/features-639765/private-features.npz")["features"]
-    rows = json.loads(Path("outputs/features-639765/private-rows.json").read_text())
+    features = np.load(args.features / "private-features.npz")["features"]
+    rows = json.loads((args.features / "private-rows.json").read_text())
+    # Reference images are indexed by row; a newer feature run must keep the
+    # same real-image rows in the same order for those indices to stay valid.
+    reference_rows = json.loads(
+        Path("outputs/features-639765/private-rows.json").read_text()
+    )
+    for index in refs["indices"]:
+        if rows[int(index)]["file"] != reference_rows[int(index)]["file"]:
+            raise ValueError("Feature rows no longer align with reference images")
     # Actual reference identity control; do not report it as model quality.
     if abs(score(images[0], images[0]) - 1) > 1e-12:
         raise ValueError("SSIM identity control failed")
     private = []
-    for group, folder in (
+    groups = [
         ("base", "outputs/cohort-632557/base"),
         ("adapted", "outputs/cohort-632557/adapted"),
         ("baseline", "outputs/baseline-vae-632570"),
-    ):
+    ] + [tuple(item.split("=", 1)) for item in args.extra]
+    for group, folder in groups:
         folder = Path(folder)
         records = json.loads((folder / "report.json").read_text())["records"]
         for r in records:
@@ -117,7 +144,7 @@ def main():
         "identity_control": True,
         "limits": "Unpaired generated cohorts; nearest selection optimistic; fixed reference arbitrary; neither score is clinical validation",
     }
-    for group in ("base", "adapted", "baseline"):
+    for group, _ in groups:
         report["groups"][group] = {}
         for label in ("all", "AD", "NC"):
             records = [

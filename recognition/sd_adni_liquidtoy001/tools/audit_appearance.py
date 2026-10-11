@@ -66,6 +66,13 @@ def main():
     parser.add_argument(
         "--baseline", type=Path, default=Path("outputs/baseline-vae-632570")
     )
+    parser.add_argument(
+        "--extra",
+        action="append",
+        default=[],
+        metavar="NAME=PATH",
+        help="additional generated cohort folder containing report.json",
+    )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     report = {
@@ -75,11 +82,11 @@ def main():
         "groups": {},
     }
     private = {}
-    for name, root in (
+    for name, root in [
         ("base", "outputs/cohort-632557/base"),
         ("adapted", "outputs/cohort-632557/adapted"),
         ("vae", args.baseline),
-    ):
+    ] + [tuple(item.split("=", 1)) for item in args.extra]:
         root = Path(root)
         source = json.loads((root / "report.json").read_text())
         records = []
