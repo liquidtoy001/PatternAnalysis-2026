@@ -552,3 +552,12 @@ probe samples share a similar pose, so the S3 audit must examine diversity.
 
 At 94 images/s the protocol's 10 epochs need about 38 min of training; the
 pre-registered epoch count is kept rather than extended. Main run: job 651851.
+
+### S2 scheduling change
+
+Job 651851 (4 h request, 200 min budget, as in the protocol) waited on priority
+with an estimated start of 22:08. With S1's measured throughput the run needs
+about 50 min including setup, validation and sampling, so it was cancelled
+before starting and resubmitted unchanged except for scheduling: job 651860,
+`--time=01:30:00`, `--time-budget-minutes 75`. The training recipe, epochs and
+acceptance criteria are as recorded in e1-protocol.md.
