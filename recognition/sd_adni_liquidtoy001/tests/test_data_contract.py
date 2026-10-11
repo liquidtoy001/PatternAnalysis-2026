@@ -92,6 +92,13 @@ class DataContractTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Path and recorded identity"):
             read_manifest(self.manifest)
 
+    def test_changed_image_is_rejected_when_hashes_are_verified(self):
+        train_image = self.root / self.rows[0]["relative_path"]
+        Image.new("L", (8, 4), 200).save(train_image)
+        ADNISliceDataset(self.root, self.manifest, "train", 8)[0]
+        with self.assertRaisesRegex(ValueError, "hash changed"):
+            ADNISliceDataset(self.root, self.manifest, "train", 8, verify_hash=True)[0]
+
     def test_invalid_resolution_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "multiple of eight"):
             ADNISliceDataset(self.root, self.manifest, "train", 255)

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import io
 from pathlib import Path, PurePosixPath
 
 import torch
@@ -97,7 +99,14 @@ class ADNISliceDataset(Dataset):
     is validated as a whole, so selecting training rows cannot hide test leakage.
     """
 
-    def __init__(self, root: Path, manifest: Path, split: str, image_size: int = 256):
+    def __init__(
+        self,
+        root: Path,
+        manifest: Path,
+        split: str,
+        image_size: int = 256,
+        verify_hash: bool = False,
+    ):
         if split not in SPLITS:
             raise ValueError(f"split must be one of {SPLITS}")
         if image_size <= 0 or image_size % 8:
@@ -105,6 +114,9 @@ class ADNISliceDataset(Dataset):
         self.root = root.resolve()
         self.rows = [row for row in read_manifest(manifest) if row["split"] == split]
         self.image_size = image_size
+        # Checking each file against its recorded SHA-256 catches a changed or
+        # substituted source image before it reaches training or evaluation.
+        self.verify_hash = verify_hash
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -114,7 +126,10 @@ class ADNISliceDataset(Dataset):
         path = (self.root / row["relative_path"]).resolve()
         if not path.is_relative_to(self.root):
             raise ValueError("Image resolves outside dataset root")
-        with Image.open(path) as source:
+        content = path.read_bytes()
+        if self.verify_hash and hashlib.sha256(content).hexdigest() != row["sha256"]:
+            raise ValueError(f"Source image hash changed: {row['relative_path']}")
+        with Image.open(io.BytesIO(content)) as source:
             image = source.convert("L")
             width, height = image.size
             side = max(width, height)
