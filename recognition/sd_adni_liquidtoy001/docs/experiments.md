@@ -515,3 +515,40 @@ scope and remaining deficiencies should be discussed at check-off. Next: reconci
 course requirement coverage and prepare the one-page feasibility discussion;
 prioritize reviewer-approved changes over open-ended parameter searches. Test
 set remains sealed; no new training submitted on the strength of these scores.
+
+## 2026-10-12 — E1 full-UNet fine-tuning: implementation and setup
+
+Protocol fixed before any job ran: [e1-protocol.md](e1-protocol.md), commit de6f30e.
+Code: `modules.py`, `train.py`, `predict.py` (commits 824bca7, 9b09bab, d0c2475);
+`dataset.py` now verifies SHA-256 per slice when asked (693df5a). 17 CPU unit tests
+pass with tiny random models, including equality of the guided DDIM sampler with
+diffusers' StableDiffusionPipeline latents. These test mechanics, not image quality.
+
+Remote run directory `~/comp3710-sd-audit/runs/e1-20261012`, symlinking the shared
+`.venv-train`, `data` and `models`; `source-sha256.txt` records commit de6f30e and
+the hash of each copied file, all equal to the committed blobs.
+
+CPU job 651837 added matplotlib 3.10.9 to `.venv-train` for `train.py`'s loss
+curves: COMPLETED, 2 min 07 s, exit 0:0, `pip check` clean, environment frozen to
+`logs/e1_environment_651837.txt`. Diffusers 0.40.0 and PEFT 0.21.2 unchanged.
+
+### S1 probe, job 651838
+
+`a100-test`, node a100-a, NVIDIA A100-PCIE-40GB: COMPLETED in 3 min 05 s, exit 0:0.
+200 full-UNet steps at batch 16 on the first 3,200 training slices (859,520,964
+trainable parameters), 256 fixed validation slices. Steady throughput 94 images/s
+after the first window (28 images/s while cuDNN benchmarked); peak PyTorch
+allocation 23.24 GiB. Encoding 3,456 slices with SHA-256 checks took 35 s.
+Validation loss after 200 steps: 0.0701 live, 0.0704 EMA; training-window loss
+fell from 0.0847 (steps 1-50) to 0.0681 (steps 151-200), still in warm-up (lr 4e-6).
+
+The 1.72 GB float16 EMA file was written to job scratch and reloaded by
+`predict.py` for two seeds per class. Its printed statistics (channel spread
+0.005, border mean 0.0004-0.0006) come from four images after 200 steps and are a
+pipeline check only, not an E1 result. Visual check of `samples/epoch-01.png`:
+black background and grayscale brain structure, while the pre-training grid
+(`epoch-00.png`, base SD at CFG 7.5) shows colourful non-MRI images. The eight
+probe samples share a similar pose, so the S3 audit must examine diversity.
+
+At 94 images/s the protocol's 10 epochs need about 38 min of training; the
+pre-registered epoch count is kept rather than extended. Main run: job 651851.

@@ -191,3 +191,19 @@ Codex rechecked task-sheet section3, reconciled the requirement coverage ledger,
 and drafted/generated a one-page English PDF for student review. Existing
 experiments are labelled retrospective evidence; tutor consultation is not recorded
 as completed. The student must verify, understand and revise this draft before use.
+
+## 2026-10-12 — Review and E1 implementation (Claude Code)
+
+- Tool: Anthropic Claude Code (Claude Opus 5.5), from this date alongside the earlier Codex work.
+- Review: compared assessment v2.2 with v2.1 page by page (text identical; two links changed), re-ran the
+  ADNI subject-overlap count on Rangpur from `meta_data_with_label.json` (565 / 331 / 216 of 680 subjects,
+  matching the 2 October audit), and explained why the Ed statement of "no overlap" holds only for scan IDs.
+- Proposed E1 (full-UNet fine-tuning) with hypotheses tied to observed E0 failures; the student approved it
+  on 12 October before any job ran. The protocol and acceptance criteria were committed first.
+- Implemented `modules.py`, `train.py`, `predict.py`, hash verification in `dataset.py`, `--extra` cohort
+  options for three audit tools, and the E1 Slurm wrappers.
+- Verification: 17 CPU unit tests with tiny random models, including a check that the guided DDIM sampler
+  matches diffusers' `StableDiffusionPipeline` latents; Ruff lint and format; rerunning the modified SSIM audit
+  with default arguments reproduced all seven 7 October means exactly; SHA-256 of every file copied to
+  Rangpur matched the committed blob.
+- Student review of the new code and of the E1 results is pending.
