@@ -30,7 +30,7 @@ import torch
 from PIL import Image, ImageDraw
 from torch.utils.data import DataLoader, Subset
 
-from dataset import ADNISliceDataset
+from dataset import ADNISliceDataset, defective_scans, foreground_share
 from modules import (
     LABELS,
     ExponentialMovingAverage,
@@ -80,9 +80,17 @@ class EncodedSplit:
     mean: torch.Tensor
     std: torch.Tensor
     label_index: torch.Tensor
+    foreground: torch.Tensor | None = None  # share of bright pixels per slice
 
     def __len__(self) -> int:
         return self.mean.shape[0]
+
+    def select(self, keep: torch.Tensor) -> "EncodedSplit":
+        """Rows where keep is True, in their original order."""
+        foreground = None if self.foreground is None else self.foreground[keep.cpu()]
+        return EncodedSplit(
+            self.mean[keep], self.std[keep], self.label_index[keep], foreground
+        )
 
 
 @torch.no_grad()
@@ -91,15 +99,38 @@ def encode_split(dataset, vae, device, batch_size=64, num_workers=2) -> EncodedS
     loader = DataLoader(
         dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
-    means, stds, labels = [], [], []
+    means, stds, labels, shares = [], [], [], []
     for batch in loader:
         posterior = vae.encode(batch["pixel_values"].to(device)).latent_dist
         means.append(posterior.mean)
         stds.append(posterior.std)
         labels.extend(LABELS.index(name) for name in batch["class_name"])
+        shares.append(foreground_share(batch["pixel_values"]))
     return EncodedSplit(
-        torch.cat(means), torch.cat(stds), torch.tensor(labels, device=device)
+        torch.cat(means),
+        torch.cat(stds),
+        torch.tensor(labels, device=device),
+        torch.cat(shares),
     )
+
+
+def dataset_rows(dataset) -> list[dict]:
+    """Manifest rows in loader order, also through a Subset."""
+    if isinstance(dataset, Subset):
+        return [dataset.dataset.rows[i] for i in dataset.indices]
+    return dataset.rows
+
+
+def exclude_defective_scans(split: EncodedSplit, rows: list[dict]):
+    """Drop every scan that dataset.defective_scans flags (the E2 change).
+
+    Returns the reduced split and the flagged scan IDs.
+    """
+    flagged = defective_scans(rows, split.foreground.tolist())
+    keep = torch.tensor(
+        [row["scan_id"] not in flagged for row in rows], device=split.mean.device
+    )
+    return split.select(keep), flagged
 
 
 @torch.no_grad()
@@ -417,6 +448,18 @@ def parse_args() -> argparse.Namespace:
         "--train-limit", type=int, help="use only the first N training slices"
     )
     parser.add_argument("--val-images", type=int, default=1024)
+    parser.add_argument(
+        "--exclude-defective-scans",
+        action="store_true",
+        help="drop training scans with any near-empty slice (docs/e2-protocol.md)",
+    )
+    parser.add_argument(
+        "--expect-excluded",
+        type=int,
+        nargs=2,
+        metavar=("SCANS", "SLICES"),
+        help="stop before training unless exactly this many are excluded",
+    )
     parser.add_argument("--gradient-checkpointing", action="store_true")
     parser.add_argument("--num-workers", type=int, default=2)
     parser.add_argument("--seed", type=int, default=3710)
@@ -477,6 +520,23 @@ def main() -> None:
     train_split = encode_split(train_set, vae, device, num_workers=args.num_workers)
     val_split = encode_split(val_set, vae, device, num_workers=args.num_workers)
     encode_seconds = time.perf_counter() - started
+    excluded = {"scans": 0, "slices": 0}
+    if args.exclude_defective_scans:
+        before = len(train_split)
+        train_split, flagged = exclude_defective_scans(
+            train_split, dataset_rows(train_set)
+        )
+        excluded = {"scans": len(flagged), "slices": before - len(train_split)}
+        print(json.dumps({"excluded": excluded}), flush=True)
+        # Scan IDs identify patients' data, so they stay in a private file.
+        (args.output / "private-excluded-scans.json").write_text(
+            json.dumps(sorted(flagged)) + "\n"
+        )
+        expected = args.expect_excluded
+        if expected and [excluded["scans"], excluded["slices"]] != expected:
+            raise SystemExit(
+                f"Excluded {excluded}, protocol expects {expected}; stopping"
+            )
 
     unet = load_unet(args.model_dir, device)
     parameters = configure_trainable(unet, args.trainable, args.lora_rank)
@@ -518,6 +578,9 @@ def main() -> None:
         "trainable_parameters": sum(p.numel() for p in parameters.values()),
         "unet_parameters": sum(p.numel() for p in unet.parameters()),
         "train_images": len(train_split),
+        "exclude_defective_scans": args.exclude_defective_scans,
+        "excluded_scans": excluded["scans"],
+        "excluded_slices": excluded["slices"],
         "val_images": len(val_split),
         "encode_seconds": encode_seconds,
         "setup_seconds": setup_seconds,

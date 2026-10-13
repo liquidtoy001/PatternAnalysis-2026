@@ -12,7 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from modules import configure_trainable, load_weights  # noqa: E402
 from test_modules import sd_schedule, tiny_embeddings, tiny_unet  # noqa: E402
-from train import EncodedSplit, TrainConfig, fit  # noqa: E402
+from train import (  # noqa: E402
+    EncodedSplit,
+    TrainConfig,
+    exclude_defective_scans,
+    fit,
+)
 
 
 class FitTest(unittest.TestCase):
@@ -97,6 +102,22 @@ class FitTest(unittest.TestCase):
             self.assertEqual(len(summary["weights"]), 1)
             fresh = tiny_unet()
             self.assertEqual(load_weights(fresh, Path(summary["weights"][0])), "lora")
+
+
+class ExclusionTest(unittest.TestCase):
+    def test_every_slice_of_a_flagged_scan_is_removed_in_order(self):
+        rows = [{"scan_id": s} for s in ("1", "1", "2", "2", "3")]
+        split = EncodedSplit(
+            torch.arange(5.0).view(5, 1, 1, 1),
+            torch.ones(5, 1, 1, 1),
+            torch.tensor([0, 0, 1, 1, 1]),
+            torch.tensor([0.4, 0.3, 0.01, 0.5, 0.2]),  # scan 2 has an empty slice
+        )
+        kept, flagged = exclude_defective_scans(split, rows)
+        self.assertEqual(flagged, {"2"})
+        self.assertEqual(kept.mean.flatten().tolist(), [0.0, 1.0, 4.0])
+        self.assertEqual(kept.label_index.tolist(), [0, 0, 1])
+        self.assertTrue(torch.allclose(kept.foreground, torch.tensor([0.4, 0.3, 0.2])))
 
 
 if __name__ == "__main__":
