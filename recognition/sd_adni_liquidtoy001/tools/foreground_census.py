@@ -8,10 +8,12 @@ the same threshold as the cohort check (pixel > 0.1 at 128 px, near-empty below
 
 import argparse
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
-from dataset import ADNISliceDataset
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dataset import ADNISliceDataset  # noqa: E402
 
 THRESHOLD, EMPTY = 0.1, 0.05
 
