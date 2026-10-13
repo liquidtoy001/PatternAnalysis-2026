@@ -677,3 +677,12 @@ cohort 656355 had already been generated and evaluated.
 Jobs: probe 656466; main run 656467 (afterok on the probe); cohorts 656472
 (epoch 10) and 656473 (epoch 5); features 656474 over historical, E1 and E2
 cohorts; CPU audits and closest-pair panels 656475.
+
+### E2 S1 probe, job 656466
+
+`a100-test`, a100-a: COMPLETED in 4 min 25 s, exit 0:0. The filter on the full
+training split removed exactly 2 scans and 40 slices, as the protocol expects.
+200 steps at 93 images/s; peak allocation 23.80 GiB; EMA weights saved to job
+scratch and reloaded by `predict.py`. Main run 656467 then waited on
+`comp3710` resources (at the front of the queue on 14 October 02:34, estimated
+start 03:44).
