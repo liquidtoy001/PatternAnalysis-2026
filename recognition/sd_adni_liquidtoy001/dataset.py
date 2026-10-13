@@ -156,3 +156,31 @@ class ADNISliceDataset(Dataset):
             "slice_index": int(row["slice_index"]),
             "relative_path": row["relative_path"],
         }
+
+
+# A slice counts as near-empty when under 5% of its pixels exceed 10% intensity.
+FOREGROUND_THRESHOLD = 0.1
+NEAR_EMPTY_BELOW = 0.05
+
+
+def foreground_share(pixel_values: torch.Tensor) -> torch.Tensor:
+    """Share of pixels brighter than FOREGROUND_THRESHOLD, per image.
+
+    Takes loader output in [-1, 1], shaped [3, H, W] or [B, 3, H, W].
+    """
+    intensity = (pixel_values[..., 0, :, :] + 1) / 2
+    return (intensity > FOREGROUND_THRESHOLD).float().mean(dim=(-2, -1))
+
+
+def defective_scans(rows: list[dict], shares: list[float]) -> set[str]:
+    """Scan IDs with at least one near-empty slice.
+
+    The whole scan is excluded, not just the empty slices, because a scan with
+    blank slices failed acquisition or preprocessing and its other slices are
+    suspect too. Decided from training data only, before any E2 run.
+    """
+    if len(rows) != len(shares):
+        raise ValueError("One foreground share is needed per row")
+    return {
+        row["scan_id"] for row, share in zip(rows, shares) if share < NEAR_EMPTY_BELOW
+    }

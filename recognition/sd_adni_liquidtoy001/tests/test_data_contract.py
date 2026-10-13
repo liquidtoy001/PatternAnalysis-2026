@@ -13,7 +13,13 @@ from PIL import Image
 PROJECT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT))
 sys.path.insert(0, str(PROJECT / "tools"))
-from dataset import FIELDS, ADNISliceDataset, read_manifest
+from dataset import (
+    FIELDS,
+    ADNISliceDataset,
+    defective_scans,
+    foreground_share,
+    read_manifest,
+)
 from prepare_data import assign_patients
 
 
@@ -98,6 +104,15 @@ class DataContractTest(unittest.TestCase):
         ADNISliceDataset(self.root, self.manifest, "train", 8)[0]
         with self.assertRaisesRegex(ValueError, "hash changed"):
             ADNISliceDataset(self.root, self.manifest, "train", 8, verify_hash=True)[0]
+
+    def test_whole_scan_is_flagged_when_any_slice_is_near_empty(self):
+        images = -torch.ones(3, 3, 20, 20)
+        images[0, :, :10] = 1.0  # half bright
+        images[2, :, :, :1] = 1.0  # 5% bright, at the threshold, so not empty
+        shares = foreground_share(images).tolist()
+        self.assertEqual(shares, [0.5, 0.0, 0.05])
+        rows = [{"scan_id": "100"}, {"scan_id": "100"}, {"scan_id": "200"}]
+        self.assertEqual(defective_scans(rows, shares), {"100"})
 
     def test_invalid_resolution_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "multiple of eight"):
