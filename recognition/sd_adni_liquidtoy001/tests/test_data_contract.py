@@ -110,7 +110,9 @@ class DataContractTest(unittest.TestCase):
         images[0, :, :10] = 1.0  # half bright
         images[2, :, :, :1] = 1.0  # 5% bright, at the threshold, so not empty
         shares = foreground_share(images).tolist()
-        self.assertEqual(shares, [0.5, 0.0, 0.05])
+        self.assertTrue(
+            torch.allclose(torch.tensor(shares), torch.tensor([0.5, 0.0, 0.05]))
+        )
         rows = [{"scan_id": "100"}, {"scan_id": "100"}, {"scan_id": "200"}]
         self.assertEqual(defective_scans(rows, shares), {"100"})
 
