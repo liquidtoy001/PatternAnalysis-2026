@@ -29,9 +29,14 @@ def main():
     args = parser.parse_args()
     x = np.load(args.input / "private-features.npz")["features"]
     rows = json.loads((args.input / "private-rows.json").read_text())
-    if x.shape != (396, 256) or len(rows) != 396 or not np.isfinite(x).all():
-        raise ValueError("Invalid feature matrix")
     groups = np.array([r["group"] for r in rows])
+    real = int(np.isin(groups, ("train", "validation")).sum())
+    if x.shape != (len(rows), 256) or real != 204 or not np.isfinite(x).all():
+        raise ValueError("Invalid feature matrix")
+    # Generated groups in the order extract_features wrote them.
+    generated_groups = list(
+        dict.fromkeys(g for g in groups if g not in ("train", "validation"))
+    )
     labels = np.array([r["label"] for r in rows])
     report = {"metric": "unstandardized pooled VAE feature RMSE", "labels": {}}
     for label in ("all", "AD", "NC"):
@@ -51,7 +56,7 @@ def main():
                 cdist(val, matched).min(1) / 16
             ),
         }
-        for group in ("base", "adapted", "baseline"):
+        for group in generated_groups:
             generated = x[(groups == group) & mask]
             distances[group] = {
                 "n": len(generated),
@@ -71,13 +76,8 @@ def main():
         ).fit_transform(x)
     np.save(args.input / "private-tsne.npy", projection)
     fig, ax = plt.subplots(figsize=(11, 8))
-    for group, marker in (
-        ("train", "o"),
-        ("validation", "s"),
-        ("base", "x"),
-        ("adapted", "^"),
-        ("baseline", "D"),
-    ):
+    markers = dict(zip(generated_groups, ("x", "^", "D", "v", "P", "*")))
+    for group, marker in [("train", "o"), ("validation", "s"), *markers.items()]:
         for label, color in (("AD", "#d55e00"), ("NC", "#0072b2")):
             mask = (groups == group) & (labels == label)
             ax.scatter(
@@ -89,7 +89,7 @@ def main():
                 label=f"{group} / {label}",
             )
     ax.set(
-        title="Frozen VAE features: joint t-SNE (396 samples)",
+        title=f"Frozen VAE features: joint t-SNE ({len(rows)} samples)",
         xlabel="t-SNE 1",
         ylabel="t-SNE 2",
     )
