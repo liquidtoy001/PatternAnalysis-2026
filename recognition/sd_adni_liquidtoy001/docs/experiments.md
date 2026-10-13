@@ -561,3 +561,37 @@ about 50 min including setup, validation and sampling, so it was cancelled
 before starting and resubmitted unchanged except for scheduling: job 651860,
 `--time=01:30:00`, `--time-budget-minutes 75`. The training recipe, epochs and
 acceptance criteria are as recorded in e1-protocol.md.
+
+### S2 main run, job 651860
+
+`comp3710`, node a100-6, NVIDIA A100-PCIE-40GB: started 2026-10-12 03:36,
+COMPLETED in 45 min 29 s, exit 0:0, stop reason `completed`. 10 epochs x 1,330
+steps = 13,300 steps at batch 16 over all 21,280 training slices, every slice
+hash-checked during encoding (133 s). 93.1 images/s over 2,286 s of training;
+peak PyTorch allocation 23.82 GiB. EMA weights saved at epochs 5 and 10
+(1.72 GB each, `runs/e1-20261012/outputs/e1-651860/weights`); home then had
+5.0 GB free.
+
+| Epoch | Train loss | Val loss, live | Val loss, EMA |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.06282 | 0.05820 | 0.05755 |
+| 2 | 0.05834 | 0.05675 | 0.05619 |
+| 3 | 0.05579 | 0.05633 | 0.05552 |
+| 5 | 0.05500 | 0.05555 | 0.05487 |
+| 7 | 0.05349 | 0.05537 | 0.05458 |
+| 9 | 0.05206 | 0.05534 | 0.05452 |
+| 10 | 0.05264 | 0.05530 | 0.05457 |
+
+Validation is 1,024 fixed slices with fixed noise and timesteps, plain noise
+and true prompts. EMA validation loss falls to a minimum at epoch 9 and rises
+once at epoch 10 (+0.00006), so the two-consecutive-rise stop condition was not
+met and epoch 10 remains the primary weights. From epoch 7 the training loss
+keeps falling while validation loss is flat: a widening gap that makes the
+memorisation audit in S3 more important, not less.
+
+Visual review of the per-epoch fixed-seed grids (8 images each, CFG 7.5):
+from epoch 1 every sample has a black background and grayscale brain anatomy
+in the same orientation as the real slices. Remaining defects at epoch 10:
+frayed, speckled brain outlines; faint blue tints along some ventricle and
+cortex edges; and one dark, low-contrast, ghosted sample (NC seed 37101) that
+looked normal at epoch 5. Eight images are not the evaluation; S3 is.
