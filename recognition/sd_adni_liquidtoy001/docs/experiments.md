@@ -650,3 +650,30 @@ not an independent evaluator.
 
 Remaining visible defects at epoch 10: faint blue tints on some ventricle edges;
 frayed outlines; seven empty or ghosted NC images. Test split still sealed.
+
+## 2026-10-13 — E2: E1 without two defective training scans
+
+Protocol approved and committed before any E2 job: [e2-protocol.md](e2-protocol.md),
+commit 283a9e2. Rule check before the protocol: CPU job 656452 (45 s, exit 0:0)
+applied `dataset.defective_scans` to train and validation at 256 px. Training: 30
+near-empty slices in 2 NC scans of 2 subjects, 40 slices flagged (19 and 11
+near-empty slices per scan); validation: none
+([aggregate](e2-flag-2026-10-13.json)). Private panels of all flagged slices,
+beside a typical NC scan, show one scan blank apart from fragments and one dark,
+grainy ghost outline: failed acquisition or preprocessing.
+
+Code: `train.py --exclude-defective-scans --expect-excluded 2 40` (19 CPU tests
+pass). Commit 3aaf187 shipped two wrappers whose line continuation was a literal
+backslash-n that would have reached `train.py` as an argument; it was caught
+before any submission and fixed in a64e1b9, after a dry run with stub commands
+parsed both wrappers' arguments with the real parser. Remote run directory
+`~/comp3710-sd-audit/runs/e2-20261013`, source hashes equal to commit a64e1b9.
+
+Storage, as approved: both E1 weight files were copied to the local
+`outputs/e1-651860/weights` with matching SHA-256, then the E1 epoch-5 file was
+deleted from Rangpur after a checksum match (6.56 GiB free afterwards). Its
+cohort 656355 had already been generated and evaluated.
+
+Jobs: probe 656466; main run 656467 (afterok on the probe); cohorts 656472
+(epoch 10) and 656473 (epoch 5); features 656474 over historical, E1 and E2
+cohorts; CPU audits and closest-pair panels 656475.
