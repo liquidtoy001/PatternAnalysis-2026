@@ -595,3 +595,58 @@ in the same orientation as the real slices. Remaining defects at epoch 10:
 frayed, speckled brain outlines; faint blue tints along some ventricle and
 cortex edges; and one dark, low-contrast, ghosted sample (NC seed 37101) that
 looked normal at epoch 5. Eight images are not the evaluation; S3 is.
+
+## 2026-10-13 — E1 S3 evaluation against the pre-registered criteria
+
+Jobs, all COMPLETED with exit 0:0: cohorts 656354 (epoch 10, primary) and 656355
+(epoch 5, exploratory, added at the student's request after training), 2 min 54 s
+and 2 min 43 s on a100-b; frozen-VAE features 656360 (23 s); pixel nearest
+neighbours and appearance 656361 (1 min 09 s); closest-pair panels 656362;
+real-slice foreground census 656380 (34 s). All 128 generated PNGs matched their
+recorded SHA-256 after download. SSIM and t-SNE ran locally (scikit-image 0.25.2);
+the historical rows reproduced the 7 October values exactly. Aggregates:
+`e1-ssim-result-2026-10-13.json`, `e1-appearance-2026-10-13.json`,
+`e1-neighbours-2026-10-13.json`, `e1-census-2026-10-13.json`.
+
+| Criterion (validation data) | E0 | E1 epoch 10 | E1 epoch 5 (exploratory) | Target | Epoch 10 |
+| --- | ---: | ---: | ---: | --- | --- |
+| Feature-nearest SSIM, mean | 0.377 | 0.688 | 0.674 | >= 0.6 | met |
+| Fixed-reference SSIM, mean | 0.350 | 0.641 | 0.625 | reported | — |
+| Nearest SSIM > 0.6 | 23/64 | 60/64 | 59/64 | — | — |
+| Border intensity, mean | 0.0592 | 0.0016 | 0.0047 | <= 0.01 | met |
+| Colour range, mean | 0.0208 | 0.0061 | 0.0062 | < 0.0208 | met |
+| Generated-to-training nearest RMSE, mean | 0.1122 | 0.0655 | 0.0700 | >= 0.0731, no near-copy | **not met** |
+
+Other context: simple VAE nearest SSIM 0.727; real validation-to-training 0.710.
+Edge measure 0.0135 (epoch 10) against real 0.0176 and VAE 0.0076: E1 is slightly
+smoother than real slices, much less than the VAE. Nearest SSIM by class at epoch
+10: AD 0.709, NC 0.666.
+
+**Memorisation finding.** The three closest epoch-10 pairs (RMSE 0.0016-0.0030)
+are near-black generated images matched to near-black training slices; the
+private panels show no brain in either. Seven of 32 epoch-10 NC images (2 of 32
+at epoch 5, 0 of 32 AD at either epoch, 0 in E0) have under 5% foreground, and
+all seven nearest training slices belong to one scan of one subject. The census
+finds near-empty slices in 0.26% of real NC training slices (about 29 of
+11,120), none in AD training and none in validation, spread over every slice
+position, so they are a defective scan rather than edge slices. Full
+fine-tuning amplifies that rare training item about 85-fold by epoch 10, more
+than at epoch 5. This is the fidelity-versus-memorisation trade-off of section
+2.4 observed directly: longer training improves SSIM and background while
+reproducing a single training scan more often.
+
+Post-hoc and exploratory only, not a substitute for the criterion: excluding the
+near-empty images, nearest-training RMSE averages 0.0712 at both epochs (minimum
+0.0445 at epoch 10), against real validation-to-training 0.0731 (minimum 0.0484)
+and validation-full 0.0771. Close to, and slightly below, the real reference;
+pixel RMSE alone neither shows nor rules out anatomical copying. Unequal
+reference-set sizes also bias the full-set distances.
+
+Joint t-SNE of 524 frozen-VAE features (102 train + 102 validation patients,
+64 per generated cohort): both E1 checkpoints fall inside the real cloud, while
+original SD, E0 and the VAE baseline form separate clusters; a small NC cluster
+of E1 points matches the near-empty images. Descriptive only; the shared VAE is
+not an independent evaluator.
+
+Remaining visible defects at epoch 10: faint blue tints on some ventricle edges;
+frayed outlines; seven empty or ghosted NC images. Test split still sealed.
