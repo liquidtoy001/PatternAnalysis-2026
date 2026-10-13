@@ -7,7 +7,7 @@
 #SBATCH --output=logs/e2_predict_%j.out
 #SBATCH --error=logs/e2_predict_%j.err
 # S3 of docs/e2-protocol.md: the 64-image cohort from given weights.
-# Usage: sbatch tools/e1_predict.sbatch outputs/e2-<job>/weights/unet-ema-epoch-10.safetensors
+# Usage: sbatch tools/e2_predict.sbatch outputs/e2-<job>/weights/unet-ema-epoch-10.safetensors
 set -euo pipefail
 umask 077
 cd "$SLURM_SUBMIT_DIR"

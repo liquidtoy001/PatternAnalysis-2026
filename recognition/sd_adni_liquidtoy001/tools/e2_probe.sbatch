@@ -17,7 +17,8 @@ nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 run="outputs/e2-probe-$SLURM_JOB_ID"
 weights="${TMPDIR:?}/e2-probe-weights"
 .venv-train/bin/python train.py --output "$run" --weights-dir "$weights" \
-    --max-steps 200 --val-images 256 --save-epochs \n    --exclude-defective-scans --expect-excluded 2 40
+    --max-steps 200 --val-images 256 --save-epochs \
+    --exclude-defective-scans --expect-excluded 2 40
 .venv-train/bin/python predict.py --weights "$weights/unet-ema-epoch-01.safetensors" \
     --output "$run/predict" --count 2
 ls -la "$weights"

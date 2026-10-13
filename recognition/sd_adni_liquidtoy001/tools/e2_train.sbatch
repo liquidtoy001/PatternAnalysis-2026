@@ -16,4 +16,5 @@ export OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 PYTHONUNBUFFERED=1
 export HF_HUB_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 .venv-train/bin/python -c 'import shutil; assert shutil.disk_usage(".").free > 5 * 1024**3, "Need 5 GiB free"'
-.venv-train/bin/python train.py --output "outputs/e2-$SLURM_JOB_ID" --time-budget-minutes 75 \n    --exclude-defective-scans --expect-excluded 2 40
+.venv-train/bin/python train.py --output "outputs/e2-$SLURM_JOB_ID" --time-budget-minutes 75 \
+    --exclude-defective-scans --expect-excluded 2 40
