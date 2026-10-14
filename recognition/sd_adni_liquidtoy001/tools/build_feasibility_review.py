@@ -10,13 +10,6 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate
 
 
-PROBE = (
-    "E1 probe (job 651838, 12 Oct): 200 full-UNet steps at batch 16 ran at 94 images/s with "
-    "23.2 GiB peak allocation on one A100 40GB; EMA weights were saved and reloaded for generation. "
-    "The 10-epoch main run (job 651851) is about 45 minutes of training."
-)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -26,7 +19,7 @@ def main():
     )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    path = args.output / "feasibility-review-2026-10-12.pdf"
+    path = args.output / "feasibility-review-2026-10-14.pdf"
     doc = SimpleDocTemplate(
         str(path),
         pagesize=(210 * mm, 297 * mm),
@@ -56,7 +49,6 @@ def main():
         "title", parent=heading, fontSize=16, leading=19, spaceBefore=0
     )
     story = []
-    PROBE_SENTENCE = PROBE
 
     def add(text, style=body):
         story.append(Paragraph(text, style))
@@ -66,71 +58,79 @@ def main():
         "ADNI synthetic MRI with Stable Diffusion fine-tuning | Project: sd_adni_liquidtoy001"
     )
     add(
-        "<b>Discussion draft - 12 October 2026 (revises 7 October). Student review and tutor check-off pending.</b><br/>"
-        "Experiments below have already run; this is a current review, not a retrospective claim of prior approval."
+        "<b>Discussion draft - 14 October 2026 (revises 7 and 12 October). "
+        "Student review and tutor check-off pending.</b><br/>"
+        "Experiments below have already run; this is a current review, not a retrospective "
+        "claim of prior approval. All results use validation data; the test split is sealed."
     )
     add("1. User need, scope and acceptance criteria", heading)
     add(
-        "A research engineer needs to assess whether synthetic 2D MRI cohorts offer useful fidelity and coverage "
-        "without reproducing training patients. This prototype compares models and diagnoses limitations; it does "
-        "not establish clinical utility, anonymization or safe public release."
+        "A research engineer needs to know whether synthetic 2D brain MRI slices are realistic "
+        "and diverse enough to share or augment data, without reproducing training patients. "
+        "This prototype measures that trade-off; it does not establish clinical utility, "
+        "anonymization or safe public release."
     )
     add(
-        "<b>Five testable criteria:</b> (1) Zero known cross-split patient/scan/file-hash overlap; "
-        "(2) finite training and verified save/resume; (3) compare original SD, LoRA-adapted SD (E0), fully "
-        "fine-tuned SD (E1) and an implemented simple VAE under one documented SSIM/reference protocol, "
-        "reporting the course's 0.6 target honestly; "
-        "(4) provide uncurated grids, feature distances, t-SNE, nearest-neighbor and interpolation diagnostics, "
-        "and 3-5 observed failure cases; (5) run on one A100 40GB within job limits with measured peak memory "
-        "and durable checkpoints. Criteria 1-2 have evidence; E0 evaluation exists but its SD fidelity is below target."
+        "<b>Five testable criteria:</b> (1) zero cross-split subject/scan/file-hash overlap; "
+        "(2) finite, reproducible training on one A100 40GB within job limits, with measured "
+        "memory and time; (3) original SD, LoRA SD (E0), fully fine-tuned SD (E1, E2) and an "
+        "implemented simple VAE compared under one SSIM protocol, reporting the course's 0.6 "
+        "target honestly; (4) uncurated grids, feature distances, t-SNE, nearest-neighbor "
+        "audits and 3-5 failure cases; (5) pre-registered acceptance criteria for every "
+        "training run, committed before it starts."
     )
     add("2. Model choice and course concepts", heading)
     add(
-        "ADNI: 30,520 slices, 680 subjects. Filename numbers are scan IDs: the original train/test folders share "
-        "no scan, but metadata subject IDs show 216 subjects in both (re-verified 12 Oct), so the project splits "
-        "by subject: 476 train / 102 validation / 102 test. SD1.5 latent diffusion is the Hard route at 256 px "
-        "with noise-prediction MSE and frozen VAE/text encoder. E0 trained rank 4 attention LoRA (797,184 parameters). "
-        "E1 fine-tunes the full UNet with 10% empty-prompt dropout, offset noise and EMA weights. "
-        "Concepts: latent compression, forward noising, denoising, conditioning, classifier-free guidance. "
-        "Reference: Rombach et al., <i>High-Resolution Image Synthesis with Latent Diffusion Models</i> (CVPR 2022). "
-        "Library scope needs tutor confirmation; Hard eligibility is not a mark guarantee."
+        "ADNI: 30,520 slices, 680 subjects. Filename numbers are scan IDs: the original "
+        "train/test folders share no scan but 216 subjects, so the project splits by subject "
+        "(476 / 102 / 102). Stable Diffusion 1.5 latent diffusion (Hard) at 256 px: frozen "
+        "VAE and text encoder, noise-prediction MSE, own training loop. E0 trained rank 4 "
+        "attention LoRA. E1 fine-tunes the full UNet with 10% empty-prompt dropout, offset "
+        "noise and EMA weights. E2 repeats E1 without two defective NC scans (40 slices) "
+        "flagged by a foreground rule fixed in advance. Concepts: latent compression, forward "
+        "noising, denoising, classifier-free guidance, fine-tuning capacity. Reference: "
+        "Rombach et al., <i>High-Resolution Image Synthesis with Latent Diffusion Models</i> "
+        "(CVPR 2022)."
     )
-    add("3. Measured feasibility and unresolved quality", heading)
+    add("3. Measured evidence", heading)
     add(
-        "E0 20,000 updates: 1 h 21 m 39 s; peak PyTorch allocation 5.69 GiB. Eight-step continuous/resumed "
-        "comparison matched exactly; this does not prove a continuous 20k equivalence. Simple conditional VAE: "
-        "128 px, 1,268,961 parameters, five epochs in 3 m 02 s. Its 106,400 image exposures exceed E0's 20,000, "
-        "so the comparison is exploratory, not budget-matched."
+        "E1 and E2: 10 epochs in 45 min each on one A100, 93 images/s, 23.8 GiB peak; "
+        "together about 1.9 A100-hours including probes and evaluation. Mean feature-nearest "
+        "SSIM over 64 fixed seeds: original SD 0.087, E0 0.377, E1 0.688, <b>E2 0.705</b> "
+        "(64/64 above 0.6), simple VAE 0.727 (blurrier), real validation to training 0.710. "
+        "The grey background of E0 is gone (border intensity 0.059 to 0.00007)."
     )
     add(
-        "Mean SSIM (fixed same-label reference / VAE-feature nearest): original SD 0.088/0.087; "
-        "adapted SD 0.350/0.377; simple VAE 0.673/0.727. <b>Adapted SD does not meet 0.6 under either protocol.</b> "
-        "No unique ground-truth target exists for a generated image; nearest selection is optimistic and "
-        "background/alignment/smoothing affect scores. Gray backgrounds, color artifacts and baseline blur "
-        "are observed failures. Shared-VAE feature distances and t-SNE are supplementary, not independent clinical evidence."
+        "<b>Memorization.</b> E1 produced 7/32 blank NC samples whose nearest training slices "
+        "all came from one defective scan; removing two such scans (E2) gave 0/32, so the "
+        "model had amplified a rare training item. The pre-registered pixel criterion (mean "
+        "nearest-training RMSE at least 0.0731) is <b>not met</b> by E1 (0.0655) or E2 "
+        "(0.0673). The five closest E2 pairs are not copies, and with size-matched references "
+        "the samples are no closer to training subjects (0.092) than to validation subjects "
+        "(0.090). Pixel distance cannot prove the absence of memorization."
     )
-    add(PROBE_SENTENCE)
-    add("4. Risks, budget, next experiment and fallback", heading)
+    add("4. Risks, budget, next steps and fallback", heading)
     add(
-        "Next experiment (E1, approved 12 Oct): each change targets an observed E0 failure. Offset noise targets the grey "
-        "background, prompt dropout the colour artifacts that grow with guidance, full-UNet training the photographic "
-        "texture, and 10 epochs at batch 16 the under-training (E0 saw 0.94 epochs). Criteria fixed before running, "
-        "validation data only: nearest SSIM mean >= 0.6, border intensity <= 0.01, colour range below E0, and "
-        "generated-to-training nearest RMSE >= 0.0731 (real-to-real). Budget: about 3, at most 5 A100-hours. "
-        "Risks: full fine-tuning may memorize training slices, which the nearest-neighbor audit tests; the changes "
-        "are bundled, so a LoRA ablation follows if time allows. Test images stay sealed until the protocol is frozen. "
-        "Fallback: report E0 and E1 against the same criteria, including any negative result."
+        "Risks: pixel and VAE-feature metrics favour smooth images (the blurry VAE scores "
+        "highest SSIM); faint colour tints and dim slices remain; one defective-scan rule may "
+        "miss subtler artefacts. No further training is planned. Next: freeze a test protocol "
+        "with a size-matched memorization comparison, evaluate all models once on the sealed "
+        "test split, profile inference latency, write the README and open the pull request "
+        "before the 26 October deadline. Fallback: submit the validation results as they stand."
     )
     add("Discussion points / completion record", heading)
     add(
-        "Confirm (a) whether the 2.6 clarification (libraries may load models; training loop and evaluation must be "
-        "own code) also applies to 2.4, (b) acceptable SSIM correspondence/target, (c) the subject-level re-split. "
-        "Student must verify and defend this draft; Codex and Claude Code assisted code, experiments and wording. "
-        "Consultation date: __________  Tutor/record: __________"
+        "Confirm (a) whether the 2.6 clarification (libraries may load models; training loop "
+        "and evaluation must be own code) also applies to 2.4; (b) that reporting a "
+        "pre-registered criterion as unmet, with the supporting analysis, is acceptable; "
+        "(c) the subject-level re-split; (d) whether real ADNI slices may appear in the public "
+        "README. Student must verify and defend this draft; Codex and Claude Code assisted code, "
+        "experiments and wording. Consultation date: __________  Tutor/record: __________"
     )
     add(
-        "Sources: task sheet v2.2 sections 2.4 and 3; docs/experiments.md, docs/e1-protocol.md and versioned results. "
-        "The review must later be included in README; this PDF is not evidence of completed check-off."
+        "Sources: task sheet v2.2 sections 2.4 and 3; docs/experiments.md, docs/e1-protocol.md, "
+        "docs/e2-protocol.md and versioned aggregate results. This PDF is not evidence of "
+        "completed check-off; the review will be included in the README."
     )
     doc.build(story)
     print(path)
