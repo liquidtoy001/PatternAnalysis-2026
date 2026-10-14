@@ -76,7 +76,12 @@ def main():
         ).fit_transform(x)
     np.save(args.input / "private-tsne.npy", projection)
     fig, ax = plt.subplots(figsize=(11, 8))
-    markers = dict(zip(generated_groups, ("x", "^", "D", "v", "P", "*")))
+    shapes = ("x", "^", "D", "v", "P", "*", "X", "h", "<", ">")
+    if len(generated_groups) > len(shapes):
+        raise ValueError(
+            f"Only {len(shapes)} marker shapes for {len(generated_groups)} groups"
+        )
+    markers = dict(zip(generated_groups, shapes))
     for group, marker in [("train", "o"), ("validation", "s"), *markers.items()]:
         for label, color in (("AD", "#d55e00"), ("NC", "#0072b2")):
             mask = (groups == group) & (labels == label)
