@@ -741,3 +741,16 @@ comparison; pixel distance cannot prove the absence of memorisation either way.
 
 Remaining visible defects at epoch 10: faint blue tints on some ventricle edges,
 a few dim or low-contrast slices, frayed outlines. Test split still sealed.
+
+## 2026-10-14 — E3: E2's recipe with E0's rank-4 adapter
+
+Protocol approved and committed before any E3 job: [e3-protocol.md](e3-protocol.md),
+commit e8d6a5a. Wrappers (commit 24ca5ab) written directly rather than derived
+with sed, dry-run with stub commands, and their train.py arguments checked with
+the real parser (`--trainable lora --lora-rank 4 --lr 1e-4`, exclusion of 2 scans /
+40 slices). Remote run directory `~/comp3710-sd-audit/runs/e3-20261015`, source
+hashes equal to commit 24ca5ab.
+
+Jobs submitted as one dependency chain: probe 660841; main run 660842; cohorts
+660843 (epoch 10) and 660844 (epoch 5); features 660845 over the historical, E1,
+E2 and E3 cohorts (9 generated groups); CPU audits and closest-pair panels 660846.
