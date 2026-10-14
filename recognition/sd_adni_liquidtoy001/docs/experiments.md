@@ -686,3 +686,58 @@ training split removed exactly 2 scans and 40 slices, as the protocol expects.
 scratch and reloaded by `predict.py`. Main run 656467 then waited on
 `comp3710` resources (at the front of the queue on 14 October 02:34, estimated
 start 03:44).
+
+### E2 S2 and S3, jobs 656467 and 656472-656475
+
+Main run 656467: `comp3710`, a100-7, started 2026-10-14 03:40, COMPLETED in
+45 min 26 s, exit 0:0. Excluded 2 scans / 40 slices as expected; 21,240 training
+slices, 13,270 steps, 93.2 images/s, peak 23.82 GiB. EMA validation loss tracks
+E1 within 0.0001 at every epoch (epoch 10: 0.05455 vs 0.05457); minimum at epoch
+9 again with a single rise at epoch 10, so the stop condition was not met.
+
+Evaluation, all COMPLETED with exit 0:0: cohorts 656472 (epoch 10) and 656473
+(epoch 5), features 656474 over historical, E1 and E2 cohorts, CPU audits and
+panels 656475. All 128 E2 PNGs matched their SHA-256 after download. SSIM and
+t-SNE ran locally; every historical and E1 row reproduced its earlier value.
+Aggregates: `e2-ssim-result-2026-10-14.json`, `e2-appearance-2026-10-14.json`,
+`e2-neighbours-2026-10-14.json`, `e2-features-2026-10-14.json`.
+
+| Criterion (validation data) | E1 epoch 10 | E2 epoch 10 | E2 epoch 5 (secondary) | E2 target | E2 epoch 10 |
+| --- | ---: | ---: | ---: | --- | --- |
+| NC samples under 5% foreground (H1) | 7/32 | **0/32** | 0/32 | <= 1/32 | met |
+| AD samples under 5% foreground | 0/32 | 0/32 | 0/32 | 0/32 | met |
+| Feature-nearest SSIM, mean | 0.688 | **0.705** | 0.683 | >= 0.6 | met |
+| Nearest SSIM > 0.6 | 60/64 | 64/64 | 62/64 | — | — |
+| Fixed-reference SSIM, mean | 0.641 | 0.654 | 0.634 | reported | — |
+| Border intensity, mean | 0.0016 | 0.00007 | 0.0007 | <= 0.01 | met |
+| Colour range, mean | 0.0061 | 0.0059 | 0.0062 | < 0.0208 | met |
+| Generated-to-training nearest RMSE, mean (H2) | 0.0655 | 0.0673 | 0.0726 | >= 0.0731, no near-copy | **not met** |
+
+Nearest SSIM by class at epoch 10: AD 0.714, NC 0.697 (E1: 0.709, 0.666); the
+lowest single value rose from 0.402 to 0.645. Edge measure 0.0134 against real
+0.0176. Real validation-to-training SSIM reference: 0.710.
+
+**H1 holds.** Removing the two defective NC scans removed every near-empty and
+ghosted sample at both epochs, so E1's blank outputs were learned from those
+scans. **H3 holds.** No fidelity criterion regressed; SSIM improved, mostly for NC.
+
+**H2, as predicted in the protocol, is not met by the pre-registered measure:**
+mean generated-to-training RMSE is 0.0673 against 0.0731. Visual review of the
+five closest pairs at each epoch (RMSE 0.040-0.052) found no near-copy: outline
+and pose are similar, but gyral folding, cerebellar folia and ventricle shape
+differ; at epoch 10, two generated images share the same nearest training slice.
+The near-identical blank pairs of E1 (RMSE 0.0016) are gone; the closest pair is
+now 0.0425 against a real validation-to-training minimum of 0.0484.
+
+Post-hoc context, not a substitute for the criterion: with equal-size
+references of one slice for each of 102 patients, epoch-10 samples are no closer
+to training patients (0.0920) than to validation patients (0.0897); real
+validation slices give 0.0918 to the same training references. The full-set
+measure is lower partly because the training reference set is 4.7 times larger
+than the validation set (21,240 vs 4,540 slices), and because many generated
+slices are dimmer and lower in contrast than real ones, which shortens pixel
+distances to dim real slices. A final protocol should use a size-matched
+comparison; pixel distance cannot prove the absence of memorisation either way.
+
+Remaining visible defects at epoch 10: faint blue tints on some ventricle edges,
+a few dim or low-contrast slices, frayed outlines. Test split still sealed.
