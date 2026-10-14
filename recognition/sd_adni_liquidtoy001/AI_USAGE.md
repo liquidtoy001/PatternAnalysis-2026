@@ -207,3 +207,39 @@ as completed. The student must verify, understand and revise this draft before u
   with default arguments reproduced all seven 7 October means exactly; SHA-256 of every file copied to
   Rangpur matched the committed blob.
 - Student review of the new code and of the E1 results is pending.
+
+## 2026-10-13 — E1 evaluation (Claude Code)
+
+- Ran E1's pre-registered evaluation: cohort generation, frozen-VAE features, SSIM, appearance
+  and pixel nearest-neighbour audits, and added `closest_panels.py` and `foreground_census.py`.
+- Verification: the extended SSIM audit reproduced every historical row exactly; generated PNGs
+  were hash-checked after download; the closest pairs were inspected visually, which showed the
+  near-zero distances were blank images rather than copied anatomy, and traced them to one scan.
+- Reported the unmet memorisation criterion as unmet, with post-hoc analysis labelled as such.
+- Mistake caught during the work: the generalised t-SNE script silently dropped a seventh cohort
+  from the figure (`zip` against six marker shapes). Found by inspecting the plot legend; fixed
+  in 593def9 with a hard error, and the 7 October output re-checked as bit-identical.
+
+## 2026-10-13/14 — E2 (Claude Code)
+
+- Proposed E2 from the E1 diagnosis; the student approved the protocol before any job ran.
+- Implemented `dataset.foreground_share` / `defective_scans`, `flag_scans.py`, the
+  `--exclude-defective-scans` option with an expected-count stop, and the E2 wrappers.
+- Verification: unit tests for the rule and the exclusion (19 pass); a CPU job and private panels
+  confirmed the two flagged scans were defective before E2 was proposed; the probe confirmed the
+  expected 2 scans / 40 slices; all remote files matched the committed blobs.
+- Mistakes caught before any submission: commit 3aaf187 contained wrappers with a literal
+  backslash-n (from a sed edit) that would have reached `train.py` as an argument; fixed in
+  a64e1b9 after a dry run with stub commands. Commit 46a11ba was made while a new unit test was
+  failing (a float tolerance in the test, not in the rule), because the command did not gate the
+  commit on the test result; fixed in 3ea01d4, and later commits were gated on passing tests.
+- With the student's approval, backed up both E1 weight files locally (SHA-256 verified) and then
+  deleted the E1 epoch-5 file on Rangpur.
+
+## 2026-10-14 — E3 and check-off material (Claude Code)
+
+- Proposed and wrote the E3 capacity-ablation protocol, approved by the student before any job;
+  wrote the E3 wrappers directly and checked their arguments with `train.py`'s own parser.
+- Updated the one-page check-off draft to 14 October and prepared check-off notes in the private
+  study site. Video recommendations were checked against their publishers' pages before listing.
+- Student review of the code, results and the final interpretation remains pending.
