@@ -73,7 +73,7 @@ def main():
     add(
         "<b>Five testable criteria:</b> (1) zero cross-split subject/scan/file-hash overlap; "
         "(2) finite, reproducible training on one A100 40GB within job limits, with measured "
-        "memory and time; (3) original SD, LoRA SD (E0), fully fine-tuned SD (E1, E2) and an "
+        "memory and time; (3) original SD, LoRA SD (E0, E3), fully fine-tuned SD (E1, E2) and an "
         "implemented simple VAE compared under one SSIM protocol, reporting the course's 0.6 "
         "target honestly; (4) uncurated grids, feature distances, t-SNE, nearest-neighbor "
         "audits and 3-5 failure cases; (5) pre-registered acceptance criteria for every "
@@ -113,10 +113,12 @@ def main():
     add(
         "Risks: pixel and VAE-feature metrics favour smooth images (the blurry VAE scores "
         "highest SSIM); faint colour tints and dim slices remain; one defective-scan rule may "
-        "miss subtler artefacts. No further training is planned. Next: freeze a test protocol "
-        "with a size-matched memorization comparison, evaluate all models once on the sealed "
-        "test split, profile inference latency, write the README and open the pull request "
-        "before the 26 October deadline. Fallback: submit the validation results as they stand."
+        "miss subtler artefacts. One more run is queued: E3 trains E0's rank-4 adapter with "
+        "E2's recipe, so E0 to E3 isolates the recipe and E3 to E2 the capacity (protocol "
+        "committed first; about 1.2 A100-hours). Then: freeze a test protocol with a size-matched "
+        "memorization comparison and a loss-based membership test, evaluate all models once on "
+        "the sealed test split, profile inference latency, write the README and open the pull "
+        "request before the 26 October deadline. Fallback: submit the validation results."
     )
     add("Discussion points / completion record", heading)
     add(
