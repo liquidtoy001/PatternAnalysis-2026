@@ -93,6 +93,33 @@ def load_unet(model_dir: Path, device: torch.device) -> UNet2DConditionModel:
     ).to(device, dtype=torch.float32)
 
 
+# B3 (docs/b3-ldm-scratch-protocol.md): SD1.5's block layout and conditioning at
+# about a ninth of the width, 92.2 M parameters, randomly initialised. It reads the
+# same 4x32x32 latents and the same 768-wide CLIP prompt embeddings as SD1.5.
+SCRATCH_UNET = dict(
+    sample_size=32,
+    in_channels=4,
+    out_channels=4,
+    layers_per_block=2,
+    block_out_channels=(128, 256, 384, 384),
+    down_block_types=("CrossAttnDownBlock2D",) * 3 + ("DownBlock2D",),
+    up_block_types=("UpBlock2D",) + ("CrossAttnUpBlock2D",) * 3,
+    cross_attention_dim=768,
+    attention_head_dim=8,
+)
+
+
+def build_unet(
+    model_dir: Path, device: torch.device, init: str = "pretrained"
+) -> UNet2DConditionModel:
+    """The pretrained SD1.5 UNet, or the smaller B3 UNet from random weights."""
+    if init == "pretrained":
+        return load_unet(model_dir, device)
+    if init == "scratch":
+        return UNet2DConditionModel(**SCRATCH_UNET).to(device, dtype=torch.float32)
+    raise ValueError(f"Unknown UNet initialisation: {init}")
+
+
 def load_noise_schedule(model_dir: Path) -> DDPMScheduler:
     """The 1000-step training schedule shipped with the checkpoint."""
     return DDPMScheduler.from_pretrained(

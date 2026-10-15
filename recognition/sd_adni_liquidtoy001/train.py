@@ -34,6 +34,7 @@ from dataset import ADNISliceDataset, defective_scans, foreground_share
 from modules import (
     LABELS,
     ExponentialMovingAverage,
+    build_unet,
     condition_batch,
     configure_trainable,
     decode,
@@ -43,7 +44,6 @@ from modules import (
     initial_noise,
     latents_from_moments,
     load_noise_schedule,
-    load_unet,
     load_vae,
     save_weights,
     training_noise,
@@ -433,6 +433,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True, help="new run directory")
     parser.add_argument("--weights-dir", type=Path, help="default: OUTPUT/weights")
     parser.add_argument("--trainable", choices=("unet", "lora"), default="unet")
+    parser.add_argument(
+        "--unet-init",
+        choices=("pretrained", "scratch"),
+        default="pretrained",
+        help="scratch: the smaller B3 UNet from random weights",
+    )
     parser.add_argument("--lora-rank", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=16)
@@ -538,7 +544,7 @@ def main() -> None:
                 f"Excluded {excluded}, protocol expects {expected}; stopping"
             )
 
-    unet = load_unet(args.model_dir, device)
+    unet = build_unet(args.model_dir, device, args.unet_init)
     parameters = configure_trainable(unet, args.trainable, args.lora_rank)
     if args.gradient_checkpointing:
         unet.enable_gradient_checkpointing()
@@ -574,6 +580,7 @@ def main() -> None:
     metrics = {
         "config": asdict(config),
         "trainable": args.trainable,
+        "unet_init": args.unet_init,
         "lora_rank": args.lora_rank if args.trainable == "lora" else None,
         "trainable_parameters": sum(p.numel() for p in parameters.values()),
         "unet_parameters": sum(p.numel() for p in unet.parameters()),

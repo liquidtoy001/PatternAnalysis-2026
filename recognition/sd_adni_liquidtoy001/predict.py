@@ -33,12 +33,12 @@ from PIL import Image, ImageDraw
 from modules import (
     LABELS,
     PROMPTS,
+    build_unet,
     decode,
     encode_prompts,
     guided_ddim,
     initial_noise,
     load_noise_schedule,
-    load_unet,
     load_vae,
     load_weights,
 )
@@ -82,6 +82,12 @@ def main() -> None:
         "--weights", type=Path, help="trained UNet or adapter; omit for base SD1.5"
     )
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--unet-init",
+        choices=("pretrained", "scratch"),
+        default="pretrained",
+        help="scratch: weights belong to the smaller B3 UNet",
+    )
     parser.add_argument("--first-seed", type=int, default=37200)
     parser.add_argument("--count", type=int, default=32, help="seeds per class")
     parser.add_argument("--guidance", type=float, nargs="+", default=[7.5])
@@ -104,7 +110,8 @@ def main() -> None:
 
     embeddings = encode_prompts(args.model_dir, device)
     vae = load_vae(args.vae_dir, device)
-    unet = load_unet(args.model_dir, device).eval().requires_grad_(False)
+    unet = build_unet(args.model_dir, device, args.unet_init)
+    unet = unet.eval().requires_grad_(False)
     mode = load_weights(unet, args.weights) if args.weights else "base"
     unet.eval()
     schedule = load_noise_schedule(args.model_dir)
@@ -166,6 +173,7 @@ def main() -> None:
         "weights": str(args.weights) if args.weights else None,
         "weights_sha256": digest(args.weights) if args.weights else None,
         "mode": mode,
+        "unet_init": args.unet_init,
         "prompts": PROMPTS,
         "scheduler": "DDIM",
         "inference_steps": args.steps,
