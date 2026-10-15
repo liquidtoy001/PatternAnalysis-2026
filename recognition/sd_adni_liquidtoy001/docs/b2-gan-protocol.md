@@ -84,3 +84,13 @@ About 1.5 A100-hours. One rerun at most, for infrastructure failure only.
 - One GAN configuration with one seed; GANs vary from run to run.
 - 128 px against E2's 256 px; both are compared at the audit resolutions.
 - Label conditioning (AD/NC) rather than text prompts.
+
+## Erratum, 2026-10-15, before any B2 job ran
+
+The collapse rule above misdescribes demonstration 2's diversity ratio. Its
+thresholds (0.8 healthy, 0.6 collapse) were calibrated on this measure, which B2
+therefore uses: every 1,000 steps, the **mean pairwise Euclidean distance** among
+64 EMA-generator samples, divided by the same for 64 random real training slices,
+both at 64x64 in [0, 1]. Not the nearest-other-sample distance over 256 images,
+as written above. Nothing else in the protocol changes. Found while porting the
+demonstration-2 code, and corrected before implementation.
