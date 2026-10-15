@@ -754,3 +754,27 @@ hashes equal to commit 24ca5ab.
 Jobs submitted as one dependency chain: probe 660841; main run 660842; cohorts
 660843 (epoch 10) and 660844 (epoch 5); features 660845 over the historical, E1,
 E2 and E3 cohorts (9 generated groups); CPU audits and closest-pair panels 660846.
+
+## 2026-10-15 — B2 and B3 submitted
+
+Protocols committed before any job: [b2-gan-protocol.md](b2-gan-protocol.md) and
+[b3-ldm-scratch-protocol.md](b3-ldm-scratch-protocol.md) (6fe8a54). While porting
+the demonstration-2 GAN, the B2 protocol was found to misdescribe that work's
+diversity ratio; a dated erratum aligning it with the measure its thresholds
+were calibrated on was committed before implementation (babe480).
+
+Code: `tools/baseline_gan.py` (72ceecd), `--unet-init scratch` (cb1daaa), wrappers
+(0c90a65); 27 CPU tests pass, and a CPU smoke run of the GAN on synthetic slices
+excluded the planted defective scan, trained, snapshotted and generated a cohort.
+Wrappers were written with the file tool; shell heredocs had double-escaped
+backslashes, which is also how E2's earlier wrapper bug arose. Every wrapper's
+commands were parsed with the real argument parsers before submission. Run
+directories `runs/b2-20261015` and `runs/b3-20261015` match commit 0c90a65.
+
+Jobs: B2 probe 663301, B2 training 663302 (afterok on the probe); B3 probe 663303.
+B3 training is submitted after its probe, with the epoch count set by the
+protocol's rule from the measured throughput.
+
+E3 (660841-660846) completed with exit 0:0 overnight; evaluation pending. Its probe
+reported a peak allocation of 36.8 GiB, above full fine-tuning's 23.8 GiB, to be
+examined with the results.
