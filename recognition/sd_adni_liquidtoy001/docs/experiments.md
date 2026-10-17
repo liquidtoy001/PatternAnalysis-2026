@@ -917,3 +917,27 @@ parsed. Run directory `runs/b2b-20261017` matches commit d33bf84.
 Jobs: probe 669123; AD GAN 669124 and NC GAN 669125 (afterok on the probe; the
 course QoS runs them one at a time, after B3's 668934); cohort 669126 (afterok on
 both); CPU audits and panels 669127.
+
+## 2026-10-17 — R1 submitted; B3 evaluation queued; B2b probe
+
+**R1.** Protocol committed before any job (7745101). Code: `--val-seed` separates the
+validation draws from the training seed (bcc96f1; a test with lr 0 confirms the
+training seed no longer moves validation loss; 29 tests pass). Wrappers 048d3f1,
+dry-run and parsed; the empty-array expansion was checked against the cluster's
+bash 4.4. Run directory `runs/r1-20261017` matches commit 048d3f1. Jobs: R1-E2
+669198, R1-E3 669199; cohorts 669200 and 669201; features 669202 (historical, E2,
+E3, R1 cohorts); audits 669203.
+
+**B3.** Evaluation queued behind training 668934, as the protocol specifies:
+cohorts from epoch 98 at guidance 7.5 (669204, primary), epoch 49 at 7.5 (669205)
+and epoch 98 at 3.0 (669206); features 669207; audits 669208. Observed while
+running: at epoch 93, training loss 0.0419 against validation loss 0.0835, a far
+larger gap than E2's; and an epoch takes 65.9 s, not the 91.3 s estimated from
+the probe, so in hindsight about 121 epochs would have fitted the 150-minute
+budget. The rule was applied as written from the probe's measurements.
+
+**B2b probe 669123** (a100-test, 3 min 48 s, exit 0:0): excluded 2 scans / 40
+slices, then trained on the 10,160 AD slices only; per-class generation path
+worked. Diversity ratio 0.90 at step 250 and 0.29 at step 500. Demonstration 2
+saw an early dip in every run, which is why the collapse rule starts at step
+5,000; the main runs will show whether it recovers.
