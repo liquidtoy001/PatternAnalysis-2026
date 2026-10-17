@@ -68,6 +68,9 @@ class TrainConfig:
     max_steps: int | None = None
     save_epochs: tuple[int, ...] = (5, 10)
     seed: int = 3710
+    # Validation slices, noise and timesteps; fixed across training seeds so
+    # replicate runs (docs/r1-seed-replicates-protocol.md) stay comparable.
+    val_seed: int = 3710
     log_every: int = 50
     time_budget_minutes: float | None = None
     guidance: float = 7.5
@@ -369,11 +372,11 @@ def fit(
         if window_steps:
             train_seconds += time.perf_counter() - window_started
         val_live = validation_loss(
-            unet, val_split, embeddings, schedule, scaling, config.seed
+            unet, val_split, embeddings, schedule, scaling, config.val_seed
         )
         with ema.applied_to(parameters):
             val_ema = validation_loss(
-                unet, val_split, embeddings, schedule, scaling, config.seed
+                unet, val_split, embeddings, schedule, scaling, config.val_seed
             )
             if sample_fn:
                 sample_fn(epoch)
@@ -468,7 +471,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--gradient-checkpointing", action="store_true")
     parser.add_argument("--num-workers", type=int, default=2)
-    parser.add_argument("--seed", type=int, default=3710)
+    parser.add_argument("--seed", type=int, default=3710, help="training randomness")
+    parser.add_argument(
+        "--val-seed",
+        type=int,
+        default=3710,
+        help="validation slices and their fixed noise; kept constant across replicates",
+    )
     parser.add_argument(
         "--data-root", type=Path, default=Path("/home/groups/comp3710/ADNI")
     )
@@ -494,6 +503,7 @@ def main() -> None:
         max_steps=args.max_steps,
         save_epochs=tuple(args.save_epochs),
         seed=args.seed,
+        val_seed=args.val_seed,
         time_budget_minutes=args.time_budget_minutes,
     )
     device = torch.device(args.device)
@@ -520,7 +530,7 @@ def main() -> None:
         args.data_root, args.manifest, "validation", 256, verify_hash=True
     )
     chosen = torch.randperm(
-        len(val_full), generator=torch.Generator().manual_seed(config.seed)
+        len(val_full), generator=torch.Generator().manual_seed(config.val_seed)
     )
     val_set = Subset(val_full, sorted(chosen[: args.val_images].tolist()))
     train_split = encode_split(train_set, vae, device, num_workers=args.num_workers)

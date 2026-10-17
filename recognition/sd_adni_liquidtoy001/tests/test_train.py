@@ -120,5 +120,45 @@ class ExclusionTest(unittest.TestCase):
         self.assertTrue(torch.allclose(kept.foreground, torch.tensor([0.4, 0.3, 0.2])))
 
 
+class ValidationSeedTest(unittest.TestCase):
+    def validation_loss_after_one_epoch(self, seed, val_seed):
+        # lr 0 leaves the weights untouched, so only the validation draws can
+        # change the reported validation loss.
+        unet = tiny_unet()
+        parameters = configure_trainable(unet, "unet")
+        generator = torch.Generator().manual_seed(4)
+        split = EncodedSplit(
+            torch.randn((8, 4, 8, 8), generator=generator),
+            torch.full((8, 4, 8, 8), 0.1),
+            torch.tensor([0, 1] * 4),
+        )
+        config = TrainConfig(
+            epochs=1, batch_size=4, lr=0.0, save_epochs=(), seed=seed, val_seed=val_seed
+        )
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder)
+            fit(
+                config,
+                unet,
+                parameters,
+                sd_schedule(),
+                tiny_embeddings(),
+                split,
+                split,
+                0.18215,
+                output,
+                output / "weights",
+            )
+            with (output / "epochs.csv").open() as stream:
+                return float(next(csv.DictReader(stream))["val_loss_live"])
+
+    def test_training_seed_does_not_move_validation_draws(self):
+        first = self.validation_loss_after_one_epoch(seed=3710, val_seed=3710)
+        replicate = self.validation_loss_after_one_epoch(seed=4710, val_seed=3710)
+        other_draws = self.validation_loss_after_one_epoch(seed=3710, val_seed=11)
+        self.assertEqual(first, replicate)
+        self.assertNotEqual(first, other_draws)
+
+
 if __name__ == "__main__":
     unittest.main()
