@@ -778,3 +778,27 @@ protocol's rule from the measured throughput.
 E3 (660841-660846) completed with exit 0:0 overnight; evaluation pending. Its probe
 reported a peak allocation of 36.8 GiB, above full fine-tuning's 23.8 GiB, to be
 examined with the results.
+
+## 2026-10-17 — B2 trained; B3 epoch count from its probe
+
+**B2 probe 663301** (a100-test, 4 min 06 s, exit 0:0): excluded 2 scans / 40
+slices; 500 steps; both diversity checks healthy (0.92, 0.83); snapshot and
+cohort generation worked.
+
+**B2 training 663302** (comp3710, a100-7, 1 h 45 min 23 s, exit 0:0). Deviation
+from the protocol: it stopped at **29,000 of the planned 30,000 steps**, by the
+105-minute safety budget in the wrapper. The budget was set from
+demonstration 2's speed; label conditioning and an R1 penalty on every step ran
+at 296 images/s instead. The collapse rule never fired (lowest ratio after step
+5,000 was 0.65), so the result is the EMA generator at step 29,000, as the
+protocol prescribes without collapse. Generator 9.17 M and discriminator
+12.51 M parameters; peak allocation 3.79 GiB.
+
+**B3 probe 663303** (a100-test, 5 min 17 s, exit 0:0): 300 steps from scratch,
+steady 281.9 images/s at batch 64, peak allocation 34.27 GiB; save and reload
+worked. Step-count rule, applied before submitting the main run: an epoch is
+331 steps (75.2 s of training at the measured rate) plus about 16 s of
+validation and sampling (14.1 s measured with 256 validation slices, plus the
+cost of 1,024), so about 91.3 s. 121 epochs would need about 184 minutes; the
+largest whole number that fits 150 minutes is **98 epochs (32,438 steps)**, with
+EMA weights at epochs 49 and 98.
