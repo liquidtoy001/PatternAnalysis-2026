@@ -86,33 +86,61 @@ class GanTest(unittest.TestCase):
         for a, b in zip(first.state_dict().values(), second.state_dict().values()):
             self.assertTrue(torch.equal(a, b))
 
+    def save_checkpoint(self, generator, path, step):
+        torch.save(
+            {
+                "generator": generator.state_dict(),
+                "resolution": 32,
+                "z_dim": 16,
+                "width": 8,
+                "step": step,
+                "diversity_ratio": None,
+            },
+            path,
+        )
+
+    def run_generate(self, folder, checkpoint=None, class_checkpoint=()):
+        args = argparse.Namespace(
+            checkpoint=checkpoint,
+            class_checkpoint=list(class_checkpoint),
+            output=folder / "cohort",
+            first_seed=37200,
+            count=2,
+            device="cpu",
+        )
+        generate(args)
+        return json.loads((folder / "cohort" / "report.json").read_text())
+
     def test_generate_writes_hashed_cohort(self):
         with tempfile.TemporaryDirectory() as folder:
             folder = Path(folder)
-            torch.save(
-                {
-                    "generator": self.generator.state_dict(),
-                    "resolution": 32,
-                    "z_dim": 16,
-                    "width": 8,
-                    "step": 7,
-                    "diversity_ratio": None,
-                },
-                folder / "final.pt",
-            )
-            args = argparse.Namespace(
-                checkpoint=folder / "final.pt",
-                output=folder / "cohort",
-                first_seed=37200,
-                count=2,
-                device="cpu",
-            )
-            generate(args)
-            report = json.loads((folder / "cohort" / "report.json").read_text())
+            self.save_checkpoint(self.generator, folder / "final.pt", 7)
+            report = self.run_generate(folder, checkpoint=folder / "final.pt")
             self.assertEqual(len(report["records"]), 4)
             for record in report["records"]:
                 data = (folder / "cohort" / record["file"]).read_bytes()
                 self.assertEqual(hashlib.sha256(data).hexdigest(), record["png_sha256"])
+
+    def test_generate_uses_each_class_checkpoint(self):
+        torch.manual_seed(5)
+        other = ConditionalGenerator(resolution=32, z_dim=16, width=8)
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            self.save_checkpoint(self.generator, folder / "ad.pt", 11)
+            self.save_checkpoint(other, folder / "nc.pt", 22)
+            report = self.run_generate(
+                folder,
+                class_checkpoint=[f"AD={folder / 'ad.pt'}", f"NC={folder / 'nc.pt'}"],
+            )
+            steps = {k: v["checkpoint_step"] for k, v in report["checkpoints"].items()}
+            self.assertEqual(steps, {"AD": 11, "NC": 22})
+            self.assertEqual(
+                [r["label"] for r in report["records"]], ["AD", "AD", "NC", "NC"]
+            )
+            with self.assertRaises(SystemExit):
+                self.run_generate(
+                    folder / "again", class_checkpoint=[f"AD={folder / 'ad.pt'}"]
+                )
 
 
 class ScratchUnetTest(unittest.TestCase):

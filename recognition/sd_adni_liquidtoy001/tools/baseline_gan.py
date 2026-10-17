@@ -267,8 +267,13 @@ def load_training_images(args, device):
         raise SystemExit(
             f"Excluded {excluded}, protocol expects {args.expect_excluded}"
         )
+    labels = torch.tensor(labels)
+    if args.train_class:
+        # B2b: one GAN per class. The exclusion above still runs on the whole
+        # split, so its expected count is the same as for every other model.
+        keep &= labels == LABELS.index(args.train_class)
     images = torch.cat(images)[keep].to(device)
-    labels = torch.tensor(labels)[keep].to(device)
+    labels = labels[keep].to(device)
     return images, labels, excluded
 
 
@@ -306,7 +311,20 @@ def train(args):
     )
     random = torch.Generator(device=device).manual_seed(args.seed)
     fixed_z = torch.randn(16, args.z_dim, generator=random, device=device)
-    fixed_labels = torch.arange(16, device=device) // 8
+    # A per-class GAN only ever sees its own label, so its label input is a
+    # constant and every batch and every collapse check stays within the class.
+    single = LABELS.index(args.train_class) if args.train_class else None
+
+    def label_batch(size, alternating=False):
+        if single is not None:
+            return torch.full((size,), single, device=device)
+        if alternating:
+            return torch.arange(size, device=device) % 2
+        return torch.randint(0, 2, (size,), generator=random, device=device)
+
+    fixed_labels = (
+        torch.arange(16, device=device) // 8 if single is None else label_batch(16)
+    )
     rule = CollapseRule(after=args.collapse_after)
     history, diversity = [], []
     window = {"d_loss": 0.0, "g_loss": 0.0, "r1": 0.0, "count": 0}
@@ -337,9 +355,7 @@ def train(args):
         )
         real, real_labels = images[index].requires_grad_(True), labels[index]
         z = torch.randn(args.batch_size, args.z_dim, generator=random, device=device)
-        fake_labels = torch.randint(
-            0, 2, (args.batch_size,), generator=random, device=device
-        )
+        fake_labels = label_batch(args.batch_size)
         with torch.no_grad():
             fake = generator(z, fake_labels)
         real_scores = discriminator(real, real_labels)
@@ -381,7 +397,7 @@ def train(args):
                 z = torch.randn(
                     DIVERSITY_BATCH, args.z_dim, generator=random, device=device
                 )
-                generated = sampler(z, torch.arange(DIVERSITY_BATCH, device=device) % 2)
+                generated = sampler(z, label_batch(DIVERSITY_BATCH, alternating=True))
                 real_index = torch.randperm(
                     len(images), generator=random, device=device
                 )[:DIVERSITY_BATCH]
@@ -485,19 +501,43 @@ def plot_curves(history, diversity, path):
     plt.close(figure)
 
 
-@torch.no_grad()
-def generate(args):
-    """The 64 fixed seeds (37200-37231 per class) as the generator's noise."""
-    device = torch.device(args.device)
-    state = torch.load(args.checkpoint, map_location=device, weights_only=True)
+def load_generator(path, device):
+    state = torch.load(path, map_location=device, weights_only=True)
     generator = ConditionalGenerator(
         state["resolution"], state["z_dim"], state["width"]
     )
     generator.load_state_dict(state["generator"])
-    generator = generator.to(device).eval()
+    return generator.to(device).eval(), state
+
+
+@torch.no_grad()
+def generate(args):
+    """The 64 fixed seeds (37200-37231 per class) as the generator's noise.
+
+    Either one conditional checkpoint (B2), or one checkpoint per class (B2b,
+    --class-checkpoint AD=PATH --class-checkpoint NC=PATH).
+    """
+    device = torch.device(args.device)
+    if bool(args.checkpoint) == bool(args.class_checkpoint):
+        raise SystemExit("Give either --checkpoint or one --class-checkpoint per class")
+    if args.checkpoint:
+        sources = {label: args.checkpoint for label in LABELS}
+    else:
+        sources = dict(item.split("=", 1) for item in args.class_checkpoint)
+        if set(sources) != set(LABELS):
+            raise SystemExit(f"Need a checkpoint for each of {LABELS}")
+        sources = {label: Path(path) for label, path in sources.items()}
     args.output.mkdir(parents=True, exist_ok=False)
-    records, tiles, tile_labels = [], [], []
+    records, tiles, tile_labels, used = [], [], [], {}
     for label_index, label in enumerate(LABELS):
+        generator, state = load_generator(sources[label], device)
+        used[label] = {
+            "checkpoint": str(sources[label]),
+            "checkpoint_sha256": hashlib.sha256(
+                sources[label].read_bytes()
+            ).hexdigest(),
+            "checkpoint_step": state["step"],
+        }
         for seed in range(args.first_seed, args.first_seed + args.count):
             z = torch.randn(
                 (1, state["z_dim"]),
@@ -525,15 +565,13 @@ def generate(args):
             tile_labels.append(label_index)
     save_grid(torch.cat(tiles), torch.tensor(tile_labels), args.output / "grid.png")
     report = {
-        "checkpoint": str(args.checkpoint),
-        "checkpoint_sha256": hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
-        "checkpoint_step": state["step"],
+        "checkpoints": used,
         "resolution": state["resolution"],
         "records": records,
         "scope": f"{len(records)} predeclared images; no test-split data read",
     }
     (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
-    print(json.dumps({"images": len(records), "checkpoint_step": state["step"]}))
+    print(json.dumps({"images": len(records), "checkpoints": used}))
 
 
 def parse_args():
@@ -558,6 +596,9 @@ def parse_args():
     train_parser.add_argument(
         "--expect-excluded", type=int, nargs=2, metavar=("SCANS", "SLICES")
     )
+    train_parser.add_argument(
+        "--train-class", choices=LABELS, help="B2b: train on one class only"
+    )
     train_parser.add_argument("--num-workers", type=int, default=2)
     train_parser.add_argument("--seed", type=int, default=3710)
     train_parser.add_argument(
@@ -568,7 +609,14 @@ def parse_args():
     )
     train_parser.add_argument("--device", default="cuda")
     generate_parser = commands.add_parser("generate")
-    generate_parser.add_argument("--checkpoint", type=Path, required=True)
+    generate_parser.add_argument("--checkpoint", type=Path)
+    generate_parser.add_argument(
+        "--class-checkpoint",
+        action="append",
+        default=[],
+        metavar="LABEL=PATH",
+        help="B2b: one per class instead of --checkpoint",
+    )
     generate_parser.add_argument("--output", type=Path, required=True)
     generate_parser.add_argument("--first-seed", type=int, default=37200)
     generate_parser.add_argument("--count", type=int, default=32)
