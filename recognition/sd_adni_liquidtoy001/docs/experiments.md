@@ -802,3 +802,61 @@ validation and sampling (14.1 s measured with 256 validation slices, plus the
 cost of 1,024), so about 91.3 s. 121 epochs would need about 184 minutes; the
 largest whole number that fits 150 minutes is **98 epochs (32,438 steps)**, with
 EMA weights at epochs 49 and 98.
+
+## 2026-10-17 — E3 results: E2's recipe with E0's rank-4 adapter
+
+Jobs, all COMPLETED with exit 0:0 on 2026-10-15: probe 660841 (excluded 2 scans /
+40 slices); main run 660842 (a100, 37 min 52 s wall, 13,270 steps, 105 images/s,
+797,184 trainable parameters, adapter files 1.6 MB each); cohorts 660843 (epoch
+10) and 660844 (epoch 5); features 660845; audits and panels 660846. All 128 PNGs
+matched their SHA-256. SSIM and t-SNE ran locally; all earlier rows reproduced.
+Aggregates: `e3-ssim-result-2026-10-17.json`, `e3-appearance-2026-10-17.json`,
+`e3-neighbours-2026-10-17.json`, `e3-features-2026-10-17.json`.
+
+| Measure (validation) | E0 | **E3 epoch 10** | E3 epoch 5 | E2 epoch 10 |
+| --- | ---: | ---: | ---: | ---: |
+| Trainable parameters | 797,184 | 797,184 | — | 859.5 M |
+| Feature-nearest SSIM, mean | 0.377 | **0.696** | 0.688 | 0.705 |
+| Nearest SSIM > 0.6 | 23/64 | 63/64 | 60/64 | 64/64 |
+| Fixed-reference SSIM, mean | 0.350 | 0.652 | 0.642 | 0.654 |
+| Border intensity, mean | 0.0592 | 0.00038 | 0.0012 | 0.00007 |
+| Colour range, mean | 0.0208 | 0.0061 | 0.0061 | 0.0059 |
+| Edge measure (real 0.0176) | 0.0230 | 0.0177 | 0.0199 | 0.0134 |
+| Near-empty samples AD / NC | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Nearest-training RMSE, mean (min) | 0.1122 | **0.0846** (0.0621) | 0.0870 (0.0593) | 0.0673 (0.0425) |
+| Size-matched nearest RMSE, train / validation | — | 0.1035 / 0.1002 | 0.1037 / 0.1032 | 0.0920 / 0.0897 |
+| EMA validation loss, epoch 10 | — | 0.0583 | — | 0.0546 |
+| Training peak allocation | 5.69 GiB | 36.82 GiB | — | 23.82 GiB |
+
+**H1 (recipe) holds.** With capacity fixed at E0's adapter, E2's recipe alone
+removes E0's grey background (border 0.059 to 0.0004) and colour artefacts
+(0.021 to 0.006), and raises SSIM from 0.377 to 0.696.
+
+**H2 (capacity) is not supported.** The protocol predicted E3 at least 0.05 SSIM
+below E2; the gap is 0.009 (0.696 vs 0.705). Of the E0-to-E2 gain of 0.328, the
+recipe accounts for 0.319 and the extra 859 M trainable parameters for 0.009.
+Full fine-tuning does fit the denoising objective better (validation loss 0.0546
+vs 0.0583) and gives smoother images (edge 0.013 vs 0.018, real 0.018); E3's edge
+measure matches real slices, though some E3 samples look over-contrasted on
+visual review.
+
+**H3 (memorisation) supported by the pixel measures.** E3 meets the
+memorisation criterion E1 and E2 failed: mean nearest-training RMSE 0.0846 against
+the 0.0731 reference, closest pair 0.0621 against the real-to-real minimum
+0.0484. Size-matched references show no training preference (0.1035 vs 0.1002).
+The five closest epoch-10 pairs differ in gyral folding, cerebellum and
+ventricle shape on visual review. The membership test in the final protocol
+will check this with a model-based measure.
+
+**Cost observation.** Despite training 0.09% of the parameters, E3's peak
+allocation (36.8 GiB) exceeded full fine-tuning's (23.8 GiB). Optimizer state
+and the EMA copy shrink to almost nothing, so the extra memory is in
+activations; the likely cause, not yet verified, is that PEFT's adapter layers
+keep float32 copies of their inputs under bfloat16 autocast. The practical
+savings are a 1.6 MB weight file instead of 1.7 GB, and 13% faster steps.
+
+**Implication for the recommendation.** At this data scale, almost all of the
+fidelity comes from the training recipe and the data cleaning, not from
+fine-tuning every weight; the small adapter reaches nearly the same SSIM with a
+weaker memorisation signal. This is reported as found; it argues for the adapter
+as the deployment candidate, pending the final test protocol.
