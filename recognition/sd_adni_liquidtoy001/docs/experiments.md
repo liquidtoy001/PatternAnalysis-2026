@@ -905,3 +905,15 @@ batch, which plausibly weakened its pressure against collapse; not verified.
 SSIM 0.58, with half its samples above the course's 0.6 target. SSIM measures
 resemblance to some real slice, not coverage of the real distribution; coverage
 needs a separate measure, which the final protocol adds.
+
+## 2026-10-17 — B2b submitted
+
+Protocol committed before any job: [b2b-gan-per-class-protocol.md](b2b-gan-per-class-protocol.md)
+(6ee115f). Code: `--train-class` and per-class generation (73c0453; 28 CPU tests
+pass; a CPU smoke run trained an AD-only GAN after the whole-split exclusion and
+generated a cohort from two per-class checkpoints). Wrappers d33bf84, dry-run and
+parsed. Run directory `runs/b2b-20261017` matches commit d33bf84.
+
+Jobs: probe 669123; AD GAN 669124 and NC GAN 669125 (afterok on the probe; the
+course QoS runs them one at a time, after B3's 668934); cohort 669126 (afterok on
+both); CPU audits and panels 669127.
