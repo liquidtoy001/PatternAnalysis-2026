@@ -860,3 +860,48 @@ fidelity comes from the training recipe and the data cleaning, not from
 fine-tuning every weight; the small adapter reaches nearly the same SSIM with a
 weaker memorisation signal. This is reported as found; it argues for the adapter
 as the deployment candidate, pending the final test protocol.
+
+## 2026-10-17 — B2 results: conditional mode collapse
+
+Evaluation jobs, COMPLETED with exit 0:0: cohort 668935 from the step-29,000 EMA
+generator, CPU audits and panels 668936, features 668943 (historical, E1-E3 and
+B2 cohorts). SSIM ran locally; earlier rows reproduced. Aggregates:
+`b2-ssim-result-2026-10-17.json`, `b2-appearance-2026-10-17.json`,
+`b2-neighbours-2026-10-17.json`.
+
+| Measure (validation) | B2 GAN | B1 VAE | E2 | Real reference |
+| --- | ---: | ---: | ---: | ---: |
+| Feature-nearest SSIM, mean | 0.581 | 0.727 | 0.705 | 0.710 |
+| Nearest SSIM > 0.6 | 32/64 | 64/64 | 64/64 | — |
+| Fixed-reference SSIM, mean | 0.556 | 0.673 | 0.654 | — |
+| Edge measure | 0.0231 | 0.0076 | 0.0134 | 0.0176 |
+| Border intensity | 0.0492 | 0.00008 | 0.00007 | 0 |
+| Within-class pairwise RMSE, AD / NC | 0.072 / 0.063 | — | — | about 0.15-0.16 overall |
+| Nearest-training RMSE, mean | 0.1254 | 0.0565 | 0.0673 | 0.0731 |
+
+**Visual review.** All 32 AD samples are nearly the same image, and so are all 32
+NC samples; neither template is a plausible brain (smooth blob outlines,
+grid-like texture, vertical artefacts at the image edges, hence the border
+value). The progress grids show the same thing from the first check at step
+1,000: within each class the eight fixed-noise samples are identical, and the
+per-class template changes shape over training without becoming anatomical.
+The generator ignored its noise input and depended only on the label: the
+conditional mode collapse described by Mao et al. (Mode Seeking GANs, CVPR 2019).
+
+**Hypotheses.** H2 (narrower coverage than E2) holds in the strongest form: the
+collapse the protocol named as the expected failure. H1 (sharper than the VAE)
+holds numerically (edge 0.0231 vs 0.0076; real 0.0176), but the sharp structure
+is not anatomy. H3: SSIM 0.581 is reported without a target.
+
+**Why the pre-registered collapse rule did not fire.** Its diversity ratio pooled
+AD and NC samples (alternating labels). The two class templates differ strongly,
+so the pooled ratio stayed between 0.65 and 1.92 while each class had a single
+output. The rule was carried over from demonstration 2's unconditional GAN and
+was not adapted to conditioning; the per-class measure needed is noted for any
+future run. The minibatch standard-deviation feature also mixes classes within a
+batch, which plausibly weakened its pressure against collapse; not verified.
+
+**Lesson for the metrics.** A completely collapsed generator still scores mean
+SSIM 0.58, with half its samples above the course's 0.6 target. SSIM measures
+resemblance to some real slice, not coverage of the real distribution; coverage
+needs a separate measure, which the final protocol adds.
