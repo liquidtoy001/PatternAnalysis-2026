@@ -383,7 +383,56 @@ for speed and is reproducible in its records, not bit for bit. Slurm wrappers in
 
 ## 13. Artificial Intelligence Usage Disclosure
 
-*To be completed from [AI_USAGE.md](AI_USAGE.md).*
+The dated record of every AI-assisted step, including mistakes, is
+[AI_USAGE.md](AI_USAGE.md). In summary:
+
+**Tools.** OpenAI Codex (2–8 October 2026) and Anthropic Claude Code with
+Claude Opus 5.5 (12–25 October 2026), both used as coding and research
+assistants with access to the repository and, through the student's account, to
+Rangpur.
+
+**What they assisted with.**
+
+- *Codex:* interpreting the assessment; the Rangpur and ADNI audit that found
+  the 216 subjects shared between the original folders; the subject-level split
+  and `dataset.py`; the VAE reconstruction check; E0 (the first LoRA run); the
+  first cohort, nearest-neighbour, appearance, SSIM and t-SNE audits; the B1
+  VAE; the first check-off draft.
+- *Claude Code:* reviewing Codex's work against the v2.2/v2.3 specification;
+  `modules.py`, `train.py` and `predict.py`; the E1, E2, E3 and R1 runs; the B2,
+  B2b and B3 baselines; the final evaluation tools (`tools/final_*.py`,
+  `membership.py`, `interpolate_final.py`, `profile_sampling.py`); the
+  pre-registered protocols; the experiment ledger; this README.
+- *The student* chose the project, approved each protocol and every GPU run
+  before it started, decided on reruns and file deletions, presented the
+  feasibility review at check-off, and relayed the tutor's feedback, which
+  reshaped the evaluation (the trilemma framing, the metric rationale, the extra
+  baselines).
+
+**How the work was audited and verified.**
+
+- *Pre-registration.* Every experiment's hypotheses and pass criteria were
+  committed before its first job ([docs](docs)); deviations are dated errata in
+  the [ledger](docs/experiments.md), and unmet criteria are reported as unmet.
+- *Tests.* CPU unit tests with tiny models (`tests/`) check the sampler against
+  diffusers' official pipeline, exact DDIM inversion, batch equivalence, the
+  metrics against closed forms (FID for Gaussians, PRDC extremes, AUC by hand),
+  the data contract and the exporters. Key tests were shown to fail on
+  deliberately broken code.
+- *Provenance.* SHA-256 of every source file copied to Rangpur, every model
+  weight file and every generated image, checked before use; dry runs of every
+  Slurm wrapper with stub commands before submission.
+- *Reproduction.* New evaluation code had to reproduce every earlier validation
+  SSIM to six decimals before the test split was read.
+- *Visual review.* Every uncurated grid and every closest-pair panel was
+  inspected before a number was interpreted; this is how E1's blank samples, the
+  GAN collapse and B3's replication were found.
+- *Mistakes found and fixed* (all listed in AI_USAGE.md): a misdescribed metric
+  in the B2 protocol, corrected before running; a collapse rule that pooled
+  classes; a BatchNorm calibration bug in the per-class GAN; an over-strict disk
+  check; batched sampling that did not reproduce earlier images, replaced by
+  one-image sampling.
+- *Student verification:* to be confirmed by the student before submission.
 
 ## 14. References
 
