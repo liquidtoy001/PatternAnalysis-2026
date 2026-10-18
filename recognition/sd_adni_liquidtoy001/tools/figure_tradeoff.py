@@ -33,6 +33,9 @@ NAMES = {
     "b3": "B3 scratch",
 }
 
+# Label offsets (points) for models that would otherwise overlap.
+OFFSETS = {"r1e2": (6, -12), "b2": (6, -12), "r1e3": (6, -12), "e0": (-18, 6)}
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -60,7 +63,7 @@ def main():
             NAMES.get(name, name),
             (coverage["mean"], preference["difference"]),
             textcoords="offset points",
-            xytext=(6, 4),
+            xytext=OFFSETS.get(name, (6, 4)),
             fontsize=8,
         )
     floor = metrics["floor"]["inception"]["prdc"]["coverage"]["mean"]
