@@ -1072,3 +1072,19 @@ generator; coverage needs a feature-based measure, which the final protocol adds
 bug corrupted the measurements the stop rule acted on, so a rerun with the fix is
 arguably allowed; it would cost about 1.5 A100-hours per class in the
 one-job course queue. The decision is the student's and is recorded below when made.
+
+## 2026-10-18 — R1: E2 replicate trained; E3 replicate resubmitted
+
+**R1-E2 669198** (comp3710, 44 min 44 s, exit 0:0): seed 4710, validation seed
+3710, excluded 2 scans / 40 slices, 13,270 steps, 92.8 images/s, peak 23.82
+GiB; EMA validation loss at epoch 10 0.05458 (E2 with seed 3710: 0.05455).
+Cohort 669200 completed.
+
+**R1-E3 669199** failed before training: the wrapper required 2 GiB free for
+either model, and home had 1.1 GiB after R1-E2's 1.7 GB checkpoint. E3 writes a
+1.6 MB adapter. The check is now sized per model (f90dd4f: 2 GiB for E2, 200 MiB
+for E3); the recipe and arguments are unchanged, as the dry run confirmed. This
+is the protocol's one infrastructure rerun, resubmitted as 672769, with cohort
+672770, features 672771 (historical E2 and E3 cohorts, both R1 cohorts) and
+audits 672772. The original dependants 669200-669203 were cancelled except
+669200, which had completed.
