@@ -1134,3 +1134,39 @@ historical values instead.
 features 672908; cohort features on the existing 64-image cohorts 672909;
 membership for SD, E2, E3, B3 and R1-E2 (672910-672914); profiling 672915;
 interpolation for E2 and E3 (672916, 672917).
+
+## 2026-10-19 — R1 results: seed replicates of E2 and E3
+
+R1-E3 ran as 672769 after the free-space fix (comp3710, 42 min 26 s, exit 0:0;
+13,270 steps, 100 images/s, peak 36.82 GiB, EMA validation loss 0.05835 against
+E3's 0.0583). Cohort 672770, features 672771 and audits 672772 completed; all
+128 R1 PNGs matched their SHA-256. SSIM ran locally; earlier rows reproduced.
+Aggregates: `r1-ssim-result-2026-10-19.json`, `r1-appearance-2026-10-19.json`,
+`r1-neighbours-2026-10-19.json`, `r1-features-2026-10-19.json`.
+
+| Validation, 64 samples | E2 (seed 3710) | R1-E2 (4710) | E3 (3710) | R1-E3 (4710) |
+| --- | ---: | ---: | ---: | ---: |
+| Feature-nearest SSIM | 0.7054 | 0.7005 | 0.6962 | 0.6936 |
+| Bootstrap 95% CI (64 images) | 0.699-0.712 | 0.692-0.708 | 0.687-0.705 | 0.686-0.701 |
+| Nearest SSIM > 0.6 | 64/64 | 63/64 | 63/64 | 64/64 |
+| Nearest-training RMSE, mean (min) | 0.0673 (0.0425) | 0.0730 (0.0433) | 0.0846 (0.0621) | 0.0789 (0.0541) |
+| Near-empty samples AD / NC | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| EMA validation loss, epoch 10 | 0.05455 | 0.05458 | 0.0583 | 0.05835 |
+
+**Decision rules, as fixed in the protocol.**
+
+- **Fidelity gap: a difference, small.** Seed means: E2 0.7030, E3 0.6949; gap
+  0.0081. The larger within-model range is E2's, 0.0049. The gap exceeds it, so
+  it is reported as a difference of 0.008 SSIM, not as seed variation. The
+  bootstrap intervals of single cohorts overlap, so the difference is small
+  relative to the evaluation noise of 64 samples.
+- **Memorisation: robust by the rule, with no margin.** Both E3 seeds meet the
+  0.0731 criterion (0.0846, 0.0789) and both E2 seeds miss it (0.0673, 0.0730).
+  R1-E2 misses by 0.0001, so the rule's verdict rests on a negligible margin for
+  that seed; the test protocol's calibrated measures replace this criterion.
+- **Failure modes:** no near-empty samples in either replicate; E2's data
+  cleaning holds across seeds.
+
+Validation loss is reproducible across seeds to 0.0001, while sample-level
+measures move by up to 0.006 in nearest-training RMSE: most of the spread in the
+memorisation numbers comes from which 64 samples are drawn, not from training.
