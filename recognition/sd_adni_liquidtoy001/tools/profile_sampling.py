@@ -96,6 +96,12 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--model-dir", type=Path, default=Path("models/sd15-smoke"))
     parser.add_argument("--vae-dir", type=Path, default=Path("models/sd15-vae"))
+    parser.add_argument(
+        "--models",
+        nargs="+",
+        default=["e2", "e3", "b3", "b1", "b2"],
+        help="a subset, so the profile can be split across jobs",
+    )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     device = torch.device("cuda")
@@ -105,11 +111,19 @@ def main():
     schedule = load_noise_schedule(args.model_dir)
     results = {"gpu": torch.cuda.get_device_name(), "torch": torch.__version__}
 
+    def save():
+        # Written after every model, so a job that hits its time limit keeps
+        # the models it finished.
+        results["seconds"] = time.perf_counter() - started
+        (args.output / "profile.json").write_text(json.dumps(results, indent=2) + "\n")
+
     for name, weights, init in (
         ("e2", args.e2, "pretrained"),
         ("e3", args.e3, "pretrained"),
         ("b3", args.b3, "scratch"),
     ):
+        if name not in args.models:
+            continue
         unet = build_unet(args.model_dir, device, init)
         mode = load_weights(unet, weights)
         unet.eval().requires_grad_(False)
@@ -121,6 +135,7 @@ def main():
         del unet, run
         torch.cuda.empty_cache()
         print(name, json.dumps(results[name]), flush=True)
+        save()
 
     settings(True)
     from baseline_gan import load_generator
@@ -142,10 +157,11 @@ def main():
         ),
     }
     for name, run in runners.items():
+        if name not in args.models:
+            continue
         results[name] = {"as_generated": [time_batches(run, b) for b in BATCHES]}
         print(name, json.dumps(results[name]), flush=True)
-    results["seconds"] = time.perf_counter() - started
-    (args.output / "profile.json").write_text(json.dumps(results, indent=2) + "\n")
+        save()
 
 
 if __name__ == "__main__":
