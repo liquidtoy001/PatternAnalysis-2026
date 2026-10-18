@@ -263,3 +263,27 @@ as completed. The student must verify, understand and revise this draft before u
     visual review; fixed with a test that fails on the old code.
   - R1's wrapper required 2 GiB free for both models, although E3 writes a 1.6 MB adapter; the R1-E3
     job (669199) refused to start. The check was sized per model (f90dd4f) and the same job resubmitted.
+
+## 2026-10-18 to 19 — Final test-split evaluation and README (Claude Code)
+
+- Drafted the final evaluation protocol, which the student approved before any code read the test
+  split; implemented the evaluation tools (batched and one-image sampling, DDIM inversion,
+  Inception features, FID/KID/PRDC, the calibrated training-preference ratio, loss-based membership
+  inference, profiling, interpolation, the blinded sort, figure and table generators); ran the
+  validation rehearsal, froze the code (2104414) and ran the test evaluation once; applied the
+  protocol's selection rule; drafted the README.
+- Verification: unit tests in two environments (53 and 20), including closed-form checks of FID and
+  exact DDIM inversion and mutation checks; dry runs of every wrapper; hashes of all code copied to
+  Rangpur and of all 9,216 test images; the rehearsal had to reproduce every published validation
+  SSIM to six decimals before the test split was read, and did; README tables are printed from the
+  metric files by `tools/results_tables.py`, not typed.
+- Mistakes, all mine:
+  - Batched sampling was planned without first checking that it reproduces earlier images; the
+    rehearsal showed it does not (a few images diverge). Replaced by one-image sampling before the
+    freeze, which reproduces 64/64 images byte for byte.
+  - The R1 results were first labelled 19 October, a day early; corrected (ad4432f).
+  - The blinded sort was first built from the one-slice-per-patient SSIM references, all middle
+    slices, which would have given a slice-position cue; noticed before the student saw it,
+    discarded, and rebuilt to draw random test slices (39dff86).
+  - A background command defined its variables in the wrong subshell, so the first local SSIM run
+    did not start; rerun unchanged. No result was affected.
