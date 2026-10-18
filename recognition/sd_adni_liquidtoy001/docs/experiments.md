@@ -1018,3 +1018,57 @@ a complete collapse, this is the second case where SSIM alone would mislead.
 At this data scale, SD's pretraining is not needed for fidelity; what it adds is
 generalisation: E2 and E3 reach the same fidelity without B3's replication
 signal. Not shown: one seed, one architecture, no early-stopped checkpoint.
+
+## 2026-10-18 — B2b results: both per-class GANs failed; a calibration bug
+
+**AD GAN 669124** (a100-7, 36 min 23 s, exit 1:0). No diversity ratio reached
+0.8 from step 5,000 on (0.62, 0.19, 0.76, 0.75, 0.44, 0.44 at steps 5,000 to
+10,000). The rule stopped it at step 10,000 after two ratios below 0.6, with no
+snapshot, so there is no AD result: the script exited with "Collapsed before any
+healthy snapshot; no result to keep", as designed.
+
+**NC GAN 669125** (a100-7, 25 min 40 s, exit 0:0). Ratio 0.81 at step 5,000
+(snapshot), then 0.34 and 0.40; stopped at step 7,000. The result is the EMA
+generator at step 5,000. Peak allocation 3.16 GiB.
+
+The cohort (669126) and audit (669127) jobs depended on both GANs and were
+cancelled. With no AD generator, the protocol's 64-image cohort cannot be made.
+
+**Visual review.** In both classes, at every check from step 1,000, the 16
+fixed-noise samples are variations of one template that is not a brain: grey
+fields, smooth blob outlines, no gyri, ventricles or cerebellum. The template
+changes from check to check. This is B2's failure, now within a single class.
+
+**A bug in the per-class code, found during this review (Claude's, commit
+73c0453).** Before every sample grid, diversity check and saved checkpoint, the
+generator's BatchNorm statistics are recalibrated by running it on random noise.
+That step still drew random AD/NC labels. A per-class GAN is trained on one
+label only, so half the calibration batches used a label embedding that was
+never trained, and the statistics were distorted. Training itself was not
+affected (BatchNorm uses batch statistics there). CPU diagnostic on the NC
+step-5,000 weights, same 64 noise vectors:
+
+| NC samples, step 5,000 | Mean pairwise RMSE (64 px) |
+| --- | ---: |
+| Saved statistics (mixed labels) | 0.136 |
+| Recalibrated with NC only | 0.166 |
+| Real slices, for reference | about 0.15 |
+
+The bug made every logged ratio too low (by about a fifth for NC; AD cannot be
+checked, as no AD weights were kept) and so may have changed the stop decisions.
+With ratios a fifth higher, the AD run might have kept a snapshot around steps
+7,000 to 8,000; this is an estimate, not a measurement. It does not explain the
+failure: correctly calibrated NC samples are just as non-anatomical, only more
+varied in position and brightness. B2 was not affected (its batches mixed both
+labels, matching its calibration). Fixed in 67d4057, with a test that
+fails on the old behaviour.
+
+**Lesson for the metrics.** The correctly calibrated NC generator matches real
+slices' pixel diversity (0.166 against about 0.15) while drawing one
+non-anatomical template. Pixel diversity, like SSIM in B2, can pass a failed
+generator; coverage needs a feature-based measure, which the final protocol adds.
+
+**Rerun.** The protocol allows one rerun, for infrastructure failure only. The
+bug corrupted the measurements the stop rule acted on, so a rerun with the fix is
+arguably allowed; it would cost about 1.5 A100-hours per class in the
+one-job course queue. The decision is the student's and is recorded below when made.

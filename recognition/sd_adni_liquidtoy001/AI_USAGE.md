@@ -243,3 +243,23 @@ as completed. The student must verify, understand and revise this draft before u
 - Updated the one-page check-off draft to 14 October and prepared check-off notes in the private
   study site. Video recommendations were checked against their publishers' pages before listing.
 - Student review of the code, results and the final interpretation remains pending.
+
+## 2026-10-15 to 18 — Baselines B2, B2b and B3; seed replicates R1 (Claude Code)
+
+- Proposed the B2 GAN (ported from the student's demonstration-2 GAN), the B3 from-scratch latent
+  diffusion model, the B2b per-class GAN rerun and the R1 seed replicates, each as a protocol the
+  student approved before any job ran. Implemented `tools/baseline_gan.py`, the scratch-UNet option,
+  `--train-class`, `--val-seed`, and every Slurm wrapper; ran the evaluations and wrote the ledger.
+- Verification: CPU tests with tiny models (30 pass), dry runs of every wrapper with stub commands,
+  SHA-256 checks of remote files against committed blobs and of every downloaded PNG, and visual
+  review of uncurated grids and closest pairs before interpreting any number.
+- Mistakes, all mine:
+  - The B2 protocol first misdescribed demonstration 2's diversity measure; corrected by a dated
+    erratum (babe480) before any run.
+  - B2's collapse rule pooled both classes, so it could not see a conditional collapse. Found in the
+    evaluation and reported; B2b checks each class separately.
+  - B2b's BatchNorm recalibration kept drawing random labels in single-class mode (73c0453), which
+    lowered every logged diversity ratio. A CPU check showed it does not explain the failure. Found by
+    visual review; fixed with a test that fails on the old code.
+  - R1's wrapper required 2 GiB free for both models, although E3 writes a 1.6 MB adapter; the R1-E3
+    job (669199) refused to start. The check was sized per model (f90dd4f) and the same job resubmitted.
