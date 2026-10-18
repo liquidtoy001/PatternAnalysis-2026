@@ -3,9 +3,10 @@
 COMP3710 final report, Section 2.4 (image generation, Hard difficulty) ·
 liquidtoy001 · `recognition/sd_adni_liquidtoy001`
 
-> **Draft.** Sections marked *pending test run* are filled in from the sealed
-> test-split evaluation ([protocol](docs/final-evaluation-protocol.md)). Every
-> other number is on the validation split and is final.
+> Final results are on 102 test subjects that no model, recipe or threshold
+> saw before the evaluation code was frozen
+> ([protocol](docs/final-evaluation-protocol.md), committed before the test
+> split was read). Section 7 reports the validation results that led there.
 
 ## Summary
 
@@ -44,9 +45,23 @@ flowchart LR
     end
 ```
 
-**Results at a glance** (test split, 1,024 samples per model): *pending test run*.
+**Results at a glance** (test split, 1,024 samples per model; real slices
+score SSIM 0.707, KID 0.06 and coverage 0.81):
 
-<!-- RESULTS-AT-A-GLANCE -->
+| Model | SSIM (course target 0.6) | KID x 100 (lower is better) | Coverage (higher is better) | Membership AUC (0.5 = no leak) | Verdict |
+| --- | ---: | ---: | ---: | ---: | --- |
+| **E2** full UNet fine-tuning | **0.704** | **1.27** | **0.27** | 0.736 | best samples; the model leaks who trained it |
+| E3 LoRA adapter | 0.696 | 4.25 | 0.07 | 0.529 | small leak, but far narrower coverage |
+| B3 diffusion from scratch | 0.703 | 1.99 | 0.24 | 1.000 | near-copies of training slices |
+| B1 VAE | 0.718 | 23.84 | 0.00 | | blurry averages |
+| B2 GAN | 0.582 | 38.98 | 0.00 | | one template per class |
+| SD zero-shot | 0.088 | 29.25 | 0.00 | 0.499 (control) | natural images |
+
+**Recommendation** (by a rule fixed before testing): **E2**, for producing a
+synthetic cohort to share. Its samples are no copies and sit at most 1.4%
+closer to training slices than held-out slices would; its *weights* must not
+be shared, because a simple loss test recognises 13.5% of training slices at a
+1% false-alarm rate (Section 10).
 
 ## Contents
 
@@ -97,7 +112,7 @@ public release. Five testable criteria:
 | --- | --- | --- |
 | 1 | Zero cross-split subject, scan and file-hash overlap | met: subject-level split, checked by `dataset.py` on every load |
 | 2 | Finite, reproducible training on one A100 40 GB within job limits, with measured memory and time | met: every run logged; E2 trains in 45 min at 23.8 GiB peak |
-| 3 | Original SD, LoRA SD (E0, E3), fully fine-tuned SD (E1, E2) and a simple baseline compared under one SSIM protocol, reporting the course's 0.6 target honestly | met on validation; test: *pending test run* |
+| 3 | Original SD, LoRA SD (E0, E3), fully fine-tuned SD (E1, E2) and a simple baseline compared under one SSIM protocol, reporting the course's 0.6 target honestly | met: on test, E2 0.704 and E3 0.696 (99% of samples above 0.6); SD 0.088 and B2 0.582 below it |
 | 4 | Uncurated grids, feature distances, t-SNE, nearest-neighbour audits and 3-5 failure cases | met (Sections 7-9) |
 | 5 | Pre-registered acceptance criteria for every training run, committed before it starts | met: one protocol per run in [docs](docs), each committed before its first job |
 
@@ -232,10 +247,10 @@ final results, on the same 102 test subjects.
 | Measure | How | Why it was chosen | How it behaved |
 | --- | --- | --- | --- |
 | Feature-nearest SSIM (course target 0.6) | each sample against its nearest held-out slice of the same class (one per patient) in frozen-VAE feature space | the course's structural measure | separates SD (0.09) from fine-tuned models (0.70), but scores a collapsed GAN 0.58 and a blurry VAE 0.73: blind to coverage and rewards smoothness |
-| KID and FID | Inception-v3 features, 1,024 samples against the class-balanced held-out set; a real-slice floor at the same size | standard distribution distances; KID is unbiased at 1,024 samples | *pending test run* |
-| Precision, recall, density, coverage | Naeem et al. (2020), k = 5 | splits "looks real" from "covers the data", which SSIM conflates | *pending test run* |
-| Training preference (M2) | per sample, log(nearest-training / nearest-held-out distance), minus the same for real held-out slices | corrects the confound that smooth samples sit close to every real slice | rehearsal: flags B3 strongly, not E2 or E3 |
-| Membership inference (M3) | denoising loss on 1,024 training versus 1,024 held-out slices; AUC against SD as control | asks whether the model itself reveals its training patients | rehearsal: E2 leaks (AUC 0.68 vs 0.47), E3 does not |
+| KID and FID | Inception-v3 features, 1,024 samples against the class-balanced held-out set; a real-slice floor at the same size | standard distribution distances; KID is unbiased at 1,024 samples | ranks the models clearly where SSIM could not: E2 1.27 against B3 1.99, E3 4.25, VAE 23.8, GAN 39.0 (floor 0.06); FID agrees |
+| Precision, recall, density, coverage | Naeem et al. (2020), k = 5 | splits "looks real" from "covers the data", which SSIM conflates | the VAE and GAN score 0 on all four despite SSIM 0.72 and 0.58; E2 covers 27% of real neighbourhoods against the floor's 81%, the largest remaining gap |
+| Training preference (M2) | per sample, log(nearest-training / nearest-held-out distance), minus the same for real held-out slices | corrects the confound that smooth samples sit close to every real slice | flags B3 (28% closer to training); E2 within 0.6-1.4%; E3 none |
+| Membership inference (M3) | denoising loss on 1,024 training versus 1,024 held-out slices; AUC against SD as control | asks whether the model itself reveals its training patients | separates what M2 cannot: E2 0.736 and B3 1.000 leak, E3 0.529 barely; SD 0.499 |
 | Closest pairs, autopsy, grids | visual review, selection rules fixed in advance | the only way to tell a copy from a neighbour, or an artefact from anatomy | found E1's blank samples and B3's replicated layouts |
 | Cost | training time and memory; sampling time and memory at batch 1 and 16 | Section 2.4 asks for VRAM, parameters and latency | Section 8 |
 
@@ -286,15 +301,101 @@ protocol per experiment in [docs](docs).
 
 ## 8. Test-split results
 
-*Pending test run.* Planned contents, as fixed in the
-[protocol](docs/final-evaluation-protocol.md): the benchmark table for all ten
-models with bootstrap 95% CIs and the real floor; uncurated grids; t-SNE with
-ground-truth colours; the memorisation and membership results; interpolation
-between synthetic samples and from training slices; and the resource table.
+All ten models were evaluated once on the 102 test subjects (4,700 slices),
+with 1,024 samples each (seeds 37200-37711 per class) and the code frozen at
+commit `2104414`; B2b had no model to evaluate. Intervals are bootstrap 95%
+intervals over samples; "E2, seed 2" and "E3, seed 2" are the R1 replicates,
+which show how much of a difference is training noise. The real floor is 1,024
+validation slices scored as if they were a generator.
 
-<!-- TEST-RESULTS -->
+### 8.1 Fidelity and coverage
 
-### Resource profile
+| Model | Feature-nearest SSIM (95% CI) | > 0.6 | KID x 100 | FID | Precision | Recall | Density | Coverage |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Real slices (floor) | 0.707 | 100% | 0.06 | 8.4 | 0.754 | 0.755 | 0.648 | 0.813 |
+| SD zero-shot | 0.088 (0.084 to 0.091) | 0% | 29.25 ± 0.32 | 311.0 | 0.000 | 0.476 | 0.000 | 0.000 |
+| E0 first LoRA | 0.328 (0.310 to 0.346) | 36% | 10.92 ± 0.22 | 89.0 | 0.079 | 0.001 | 0.021 | 0.028 |
+| **E2** full UNet | 0.704 (0.703 to 0.706) | 99% | 1.27 ± 0.08 | 22.7 | 0.267 | 0.849 | 0.103 | 0.274 |
+| E2, seed 2 | 0.702 (0.700 to 0.704) | 99% | 1.19 ± 0.07 | 20.9 | 0.302 | 0.816 | 0.111 | 0.288 |
+| **E3** adapter | 0.696 (0.694 to 0.698) | 99% | 4.25 ± 0.14 | 48.7 | 0.065 | 0.675 | 0.019 | 0.066 |
+| E3, seed 2 | 0.694 (0.691 to 0.697) | 96% | 4.19 ± 0.15 | 47.6 | 0.044 | 0.751 | 0.011 | 0.035 |
+| B3 from scratch | 0.703 (0.701 to 0.705) | 99% | 1.99 ± 0.10 | 28.3 | 0.279 | 0.803 | 0.101 | 0.242 |
+| B1 VAE | 0.718 (0.716 to 0.719) | 100% | 23.84 ± 0.29 | 187.9 | 0.000 | 0.000 | 0.000 | 0.000 |
+| B2 GAN | 0.582 (0.576 to 0.587) | 49% | 38.98 ± 0.31 | 297.4 | 0.000 | 0.000 | 0.000 | 0.000 |
+
+- **The course target is met** by every fine-tuned diffusion model and the
+  VAE; SSIM cannot separate them (0.694-0.718).
+- **The distribution measures can.** E2 has the lowest KID and FID and the
+  highest coverage of any model, reproduced by its second seed. B3 comes
+  second; E3's KID is three times E2's and its coverage a quarter.
+- **The baselines fail the coverage corner outright.** The VAE (SSIM 0.718)
+  and the GAN score zero precision, recall, density and coverage: blurry
+  averages and one template per class lie outside every real neighbourhood.
+- **The gap to real data is coverage, not SSIM:** E2 covers 27% of real
+  neighbourhoods against 81% for real slices, and its precision (0.27 against
+  0.75) says many samples carry features real slices do not (Section 9).
+
+### 8.2 Memorisation and membership
+
+| Model | Nearest-training RMSE, mean (min) | M2 pixel: difference (95% CI) | Closer to training (negative: farther) | M2 VAE: difference (95% CI) | Membership AUC | AUC minus SD (95% CI) | TPR at 1% FPR |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Real held-out slices | 0.0745 (0.0424) | 0 (calibration) | 0% | 0 (calibration) | | | |
+| SD zero-shot | 0.4914 (0.2663) | +0.0740 (0.0712 to 0.0768) | -7.7% | +0.0932 (0.0895 to 0.0969) | 0.499 | control | 3.0% |
+| E0 first LoRA | 0.1184 (0.0620) | +0.0273 (0.0219 to 0.0326) | -2.8% | +0.0572 (0.0514 to 0.0631) | n/a | n/a | n/a |
+| **E2** full UNet | 0.0683 (0.0387) | -0.0064 (-0.0131 to 0.0004) | +0.6% | -0.0145 (-0.0233 to -0.0058) | 0.736 | +0.237 (0.219 to 0.255) | 13.5% |
+| E2, seed 2 | 0.0711 (0.0374) | -0.0043 (-0.0111 to 0.0027) | +0.4% | -0.0122 (-0.0212 to -0.0034) | 0.732 | +0.234 (0.216 to 0.252) | 13.3% |
+| **E3** adapter | 0.0823 (0.0506) | +0.0257 (0.0207 to 0.0308) | -2.6% | +0.0269 (0.0202 to 0.0336) | 0.529 | +0.030 (0.014 to 0.047) | 1.8% |
+| E3, seed 2 | 0.0770 (0.0520) | +0.0106 (0.0049 to 0.0161) | -1.1% | +0.0109 (0.0040 to 0.0178) | 0.531 | +0.032 (0.016 to 0.049) | 1.9% |
+| B3 from scratch | 0.0519 (0.0172) | -0.3334 (-0.3515 to -0.3154) | +28.3% | -0.2720 (-0.2885 to -0.2566) | 1.000 | +0.501 (0.476 to 0.526) | 100.0% |
+| B1 VAE | 0.0560 (0.0347) | -0.0305 (-0.0372 to -0.0236) | +3.0% | +0.0337 (0.0290 to 0.0385) | n/a | n/a | n/a |
+| B2 GAN | 0.1243 (0.0849) | +0.0745 (0.0711 to 0.0780) | -7.7% | +0.0494 (0.0456 to 0.0533) | n/a | n/a | n/a |
+
+- **Samples (M2).** B3's samples are 28% closer to training slices than
+  held-out slices would be, and its closest pairs are near-copies (three
+  different seeds reproduce one training slice). E2's pixel-space interval
+  touches zero (-0.0131 to +0.0004); in VAE features its samples are 1.4%
+  closer. E3's samples are slightly farther from training than held-out slices.
+- **Models (M3).** The loss test, with SD as control (AUC 0.499), recognises
+  B3's training slices perfectly (AUC 1.000) and E2's well (0.736; 13.5% of
+  training slices caught at 1% false alarms), both reproduced by the second
+  seeds. E3 leaks far less (0.529, 1.8%), but its interval excludes zero.
+- **What separates the two.** Sharing samples and sharing weights are
+  different risks: E2's samples carry little of its training set, but its
+  weights do.
+
+![Coverage against training preference, and membership AUC above the SD control](docs/figures/tradeoff-test.png)
+
+### 8.3 Uncurated samples and the embedding
+
+The first 32 seeds per class of the two candidates, exactly as generated (no
+selection):
+
+| E2 | E3 |
+| --- | --- |
+| ![E2 uncurated grid](docs/figures/grid-e2.png) | ![E3 uncurated grid](docs/figures/grid-e3.png) |
+
+![Joint t-SNE of frozen VAE features: training and test slices by true class, generated samples by requested class](docs/figures/tsne-test.png)
+
+E2, E3 and B3 fall inside the cloud of real slices; SD, E0, the VAE and the
+GAN form their own clusters away from it.
+
+### 8.4 Interpolation
+
+Section 2.4 asks for latent interpolation between synthetic images and training
+scans. Between two synthetic samples (I1, below), E2's frames change
+continuously and no interior frame comes closer to a training slice than the
+closest real pair (0.042); one NC path changes brightness and size abruptly
+between frames 5 and 6. From a training slice (I2: the slice is inverted to
+starting noise by DDIM inversion, then interpolated towards a synthetic
+sample), the endpoint is reconstructed to RMSE 0.04-0.06 and the distance to
+the training slice rises steadily to a typical sample distance (about 0.06):
+the model leaves the training slice gradually rather than snapping between
+stored images. The I2 panels contain training slices and stay private;
+the numbers are in [test-interpolation-2026-10-19.json](docs/test-interpolation-2026-10-19.json).
+
+![E2 interpolation between pairs of synthetic samples](docs/figures/interpolation-e2.png)
+
+### 8.5 Resource profile
 
 One NVIDIA A100-PCIE-40GB throughout. Training figures come from each run's
 own `metrics.json`; sampling was profiled in one job (672915): median of 20 timed
@@ -344,14 +445,66 @@ Representative failures from actual runs on Rangpur, each with its root cause.
    gyri. *Root cause:* 92 M parameters trained from scratch on 21 k slices
    overfit (validation loss minimal at epoch 23, rising for 75 epochs); this is
    the replication Somepalli et al. (2023) describe.
-5. **The recommended model's worst test samples.** *Pending test run:* the five
-   lowest-SSIM test samples, selected by rule.
+5. **The recommended model's worst test samples (E2).** Selected by the rule
+   fixed in advance (the 5 lowest SSIM of 1,024, plus any near-empty sample;
+   there were none), so they are not cherry-picked:
+
+   ![E2's five lowest-SSIM test samples](docs/figures/autopsy-e2.png)
+
+   | Sample (SSIM) | What is wrong | Likely trigger (not verified) |
+   | --- | --- | --- |
+   | NC-37263 (0.536), NC-37595 (0.586) | over-bright, flattened grey-white contrast; anatomy cut off at the frame edge | guidance 7.5 pushes intensities to extremes; off-centre slices are rare in training |
+   | NC-37407 (0.563) | posterior fossa (brainstem, cerebellum) dissolves into ragged, disordered tissue | the region varies most between slices and subjects, so the model averages incompatible shapes |
+   | NC-37489 (0.577) | a stripe runs from the brainstem to the image edge; a bright rim surrounds the cortex | some training slices keep skull-stripping remnants, which the model reproduces and exaggerates |
+   | NC-37341 (0.587) | lower half replaced by dark, mottled texture with no anatomy | the same posterior-fossa failure, more severe |
+
+   All five are NC, the class with twice the subjects and more variety. These
+   are the "physiologically impossible tissue junctions" of Section 2.4: rare,
+   but present, and the reason E2's precision (0.27) is far below real slices'
+   (0.75). A downstream model trained on unfiltered samples could learn them.
 
 ## 10. Recommendation for the project manager
 
-*Pending test run.* The choice between E2 and E3 follows the rule fixed in the
-protocol: exclude a model below SSIM 0.6 or with copies; prefer the model
-without a memorisation signal; then higher coverage; otherwise the smaller E3.
+**Recommendation: E2 (full UNet fine-tuning), to generate a synthetic cohort;
+do not share its weights.**
+
+*How it was chosen.* By the rule fixed in the protocol before the test split
+was read: (1) neither E2 nor E3 is excluded (both SSIM > 0.6, no copies);
+(2) both show a memorisation signal, since E3's membership excess
+(+0.030, interval 0.014-0.047) excludes zero, so this step does not decide;
+(3) E2's coverage (0.274) exceeds E3's (0.066) by far more than the seed
+spread. The rule treats a signal as present or absent; it does not weigh its
+size, which is why the size is stated next.
+
+**Verdict on the E2 cohort**, against the protocol's criteria:
+
+| Question | Verdict | Evidence |
+| --- | --- | --- |
+| Structural fidelity | **passes** | SSIM 0.704 (interval 0.703-0.706), 99% of samples above 0.6; real slices 0.707 |
+| Non-memorised samples | **largely, not fully** | no copies among the closest pairs; samples at most 0.6% (pixels, interval includes 0) to 1.4% (features) closer to training slices than held-out slices would be |
+| Non-memorised model | **fails** | membership AUC 0.736 against 0.499 for the control; 13.5% of training slices recognised at 1% false alarms; same with a second seed |
+| Coverage | **best of all models, far from real** | KID 1.27 x 10⁻² (floor 0.06), coverage 0.27 (floor 0.81) |
+| Plausibility | **plausible to a non-expert, with rare impossible anatomy** | uncurated grids, t-SNE inside the real cloud; the autopsy above; blinded sort pending |
+| Fit for downstream training | **not established** | no train-on-synthetic, test-on-real study was run |
+
+**Trade-offs for the decision.**
+
+- *If only images leave the hospital:* E2. It gives the most realistic and most
+  varied cohort, and its samples carry little of the training set. Screen out
+  the rare impossible slices (for example, by the posterior-fossa and
+  frame-edge failures above) before use.
+- *If the model itself must be shared:* not E2, and not B3. E3 leaks far less
+  (AUC 0.529) at a 1.6 MB file size, but covers a quarter as much of the real
+  data; a model trained with differential privacy would be the next step.
+- *If cost dominates:* the adapter trains in 38 minutes and stores in 1.6 MB,
+  against 43 minutes and 1.7 GB, but samples 35% slower unless merged.
+- *Never* use a diffusion model trained from scratch on a dataset this size
+  (B3): it matches E2's SSIM while reproducing training slices.
+
+**What the project manager should not conclude.** That the cohort is
+anonymous: membership inference shows the training set is recoverable from the
+model. That it is clinically valid: no radiologist reviewed it. That it helps a
+classifier: not tested.
 
 ## 11. Reproducing the results
 
