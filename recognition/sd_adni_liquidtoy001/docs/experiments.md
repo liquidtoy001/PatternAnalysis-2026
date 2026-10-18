@@ -941,3 +941,80 @@ slices, then trained on the 10,160 AD slices only; per-class generation path
 worked. Diversity ratio 0.90 at step 250 and 0.29 at step 500. Demonstration 2
 saw an early dip in every run, which is why the collapse rule starts at step
 5,000; the main runs will show whether it recovers.
+
+## 2026-10-18 — B3 results: matches E2's fidelity, with a clear memorisation signal
+
+Jobs, all COMPLETED with exit 0:0: training 668934 (comp3710, A100, 1 h 52 min
+wall; 98 epochs, 32,438 steps at batch 64, 401 images/s, 86 min of training,
+peak allocation 34.29 GiB; 92,235,396 parameters from random initialisation);
+cohorts 669204 (epoch 98, guidance 7.5, primary), 669205 (epoch 49) and 669206
+(epoch 98, guidance 3.0); features 669207; audits and panels 669208. All 192
+PNGs matched their SHA-256. SSIM and t-SNE ran locally; the earlier rows
+reproduced. Aggregates: `b3-ssim-result-2026-10-18.json`,
+`b3-appearance-2026-10-18.json`, `b3-neighbours-2026-10-18.json`,
+`b3-features-2026-10-18.json`.
+
+| Measure (validation) | **B3 epoch 98** | B3 epoch 49 | B3 epoch 98, guidance 3.0 | E2 epoch 10 | E3 epoch 10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| UNet parameters / initialisation | 92.2 M / random | — | — | 859.5 M / SD1.5 | adapter / SD1.5 |
+| Feature-nearest SSIM, mean | **0.710** | 0.711 | 0.716 | 0.705 | 0.696 |
+| Nearest SSIM > 0.6 | 64/64 | 64/64 | 64/64 | 64/64 | 63/64 |
+| Fixed-reference SSIM, mean | 0.658 | 0.650 | 0.660 | 0.654 | 0.652 |
+| Border intensity, mean | 0.0005 | 0.0003 | 0.00001 | 0.00007 | 0.00038 |
+| Colour range, mean | 0.0056 | 0.0061 | 0.0058 | 0.0059 | 0.0061 |
+| Edge measure (real 0.0176) | 0.0128 | 0.0133 | 0.0116 | 0.0134 | 0.0177 |
+| Near-empty samples AD / NC | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Pairwise RMSE between samples | 0.137 | 0.141 | 0.122 | 0.135 | 0.155 |
+| Nearest-training RMSE, mean (min) | **0.0516** (0.0212) | 0.0631 (0.0385) | 0.0487 (0.0181) | 0.0673 (0.0425) | 0.0846 (0.0621) |
+| Nearest-validation RMSE, mean | 0.0726 | 0.0757 | 0.0661 | 0.0738 | 0.0886 |
+| Nearest training / nearest validation | **0.71** | 0.83 | 0.74 | 0.91 | 0.95 |
+| Size-matched nearest RMSE, train / validation | 0.0919 / 0.0873 | 0.0928 / 0.0914 | 0.0882 / 0.0810 | 0.0920 / 0.0897 | 0.1035 / 0.1002 |
+| EMA validation loss at the reported epoch | 0.0838 | 0.0694 | — | 0.0546 | 0.0583 |
+
+The real references are unchanged: feature-nearest SSIM 0.710 between real
+slices, and 0.0731 mean nearest-training RMSE for real validation slices
+(minimum 0.0484).
+
+**Loss curves.** B3's EMA validation loss reached its minimum, 0.0632, at
+epoch 23, then rose in every one of the remaining 75 epochs, to 0.0838 at epoch
+98, while training loss fell from 0.060 to 0.041. E2's validation loss fell
+until epoch 9 and was flat at epoch 10 (0.0545, then 0.0546).
+The protocol fixed the saved epochs at 49 and 98, so no checkpoint near epoch 23
+exists.
+
+**H1 (pretraining helps fidelity) is not supported.** B3 matches E2 on every
+fidelity measure at a ninth of the size and with no pretraining: SSIM 0.710
+against 0.705, the same edge, border and colour values, no blank samples, and
+both cohorts inside the real cloud in the t-SNE plot. On visual review of the
+uncurated 64-image grid, beside E2's, there is no systematic anatomical
+difference at grid scale.
+
+**H2 (memorisation) is supported by the full-training nearest-neighbour
+measure.** B3's mean nearest-training RMSE is 0.0516, well below the 0.0731
+real reference and E2's 0.0673; its closest pair (0.0212) is less than half the
+closest real-to-real distance (0.0484). Every model is measured against the same
+two reference sets, so the ratio of nearest-training to nearest-validation
+distance is comparable between models: B3's samples are 29% closer to their
+nearest training slice than to their nearest validation slice, against 9% for
+E2 and 5% for E3. The signal grows with training (17% at epoch 49, 29% at epoch
+98), in step with the rising validation loss. The five closest epoch-98 pairs,
+all NC, reproduce their training slice's outline, ventricle shape and
+cerebellum position, with smeared or noisy gyri: replication of a slice's layout,
+not a pixel copy (the kind Somepalli et al. describe).
+
+The size-matched comparison (102 references per side) and the patient-matched
+VAE feature distances show no preference for training patients. A likely
+reason, not verified: a 102-slice subset rarely contains the particular
+training slice a sample replicates, so these tests have little power against
+slice-level replication. The membership test in the final protocol is
+model-based and does not depend on reference subsets.
+
+**Guidance 3.0** gives the highest SSIM of any model (0.716) and an even
+stronger memorisation signal (0.0487); it is reported, not chosen.
+
+**Implication.** SSIM rated the from-scratch model as highly as the pretrained
+one; only the memorisation measures tell them apart. With B2, where SSIM missed
+a complete collapse, this is the second case where SSIM alone would mislead.
+At this data scale, SD's pretraining is not needed for fidelity; what it adds is
+generalisation: E2 and E3 reach the same fidelity without B3's replication
+signal. Not shown: one seed, one architecture, no early-stopped checkpoint.
