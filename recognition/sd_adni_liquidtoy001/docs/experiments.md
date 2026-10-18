@@ -1170,3 +1170,46 @@ Aggregates: `r1-ssim-result-2026-10-18.json`, `r1-appearance-2026-10-18.json`,
 Validation loss is reproducible across seeds to 0.0001, while sample-level
 measures move by up to 0.006 in nearest-training RMSE: most of the spread in the
 memorisation numbers comes from which 64 samples are drawn, not from training.
+
+## 2026-10-19 — Rehearsal results; B2b rerun; code frozen for the test run
+
+**Rehearsal** (validation in place of test; no test slice read). All 17 jobs
+(672901-672917) completed with exit 0:0.
+
+- **SSIM reproduction (required): passed.** The new test-SSIM path, run with
+  validation references, reproduces every published value to six decimals:
+  SD 0.087000, E0 0.376754, B1 0.726595, E2 0.705447, E3 0.696168, B3 0.709494,
+  B2 0.580715 (fixed-reference values equal too). Real floor (training patients
+  against validation patients) 0.707.
+- **Batched generation (required): failed, so it is not used.** Batch 16 starts
+  from identical noise (all noise hashes equal) but does not reproduce the
+  existing images: median pixel correlation 0.9986, yet 3 of 64 E2 images and
+  3 of 64 E3 images fall to 0.72-0.88, because guidance 7.5 over 30 DDIM steps
+  amplifies rounding that depends on the batch shape. B1 and B2 reproduce 64/64.
+  Diffusion cohorts are therefore generated at batch size 1, the path of every
+  earlier cohort (7f162ef). Check jobs 673018 and 673019 regenerated E2 and E3
+  at batch 1 with the new code: **64/64 PNGs byte-identical** for both.
+- **Distribution, memorisation and membership measures** ran end to end. On these
+  64-image cohorts (FID is strongly biased at this size; the test uses 1,024):
+  E2 coverage 0.62, E3 0.28, B3 0.49, real floor 0.84; training preference M2
+  E2 -0.012 (CI -0.037 to 0.014), E3 +0.031, B3 -0.291 (CI -0.354 to -0.231);
+  membership AUC E2 0.684, E3 0.479, SD control 0.465.
+- **Profiling** (672915, A100-PCIE-40GB, 17 min): seconds per image at batch 1
+  and 16, deterministic settings: E2 1.97 and 0.49, E3 2.67 and 0.54, B3 1.90 and
+  0.32; with fast settings: E2 1.32 and 0.23, E3 1.96 and 0.27, B3 1.29 and 0.11;
+  B1 and B2 about 1 ms. Peak allocation 3.8 GiB (E2, batch 1) to 8.7 GiB (batch
+  16). Profiling reads no evaluation data, so these are the final cost figures.
+- **Interpolation** (672916, 672917): no I1 path jumps towards a training slice
+  for E2 or E3; I2 inversion reconstructs its training slice to RMSE 0.04-0.06,
+  and the distance to it rises smoothly along the path.
+
+**B2b rerun** (the protocol's one rerun, with the calibration fix): AD 672812
+and NC 672813 both stopped with no healthy snapshot (AD ratios after step 5,000:
+0.18, 0.35; NC: 0.39, 0.35). The first run's NC snapshot at step 5,000 does not
+recur. B2b has no result in either class, so it is reported as failed and, as
+the protocol specifies, does not enter the test evaluation. Its cohort and
+audit jobs (672814-672816) were cancelled.
+
+**Code frozen.** The commit recording this entry is the frozen commit; the run
+directory is refreshed to it and verified before any test job is submitted.
+B2b is excluded; R1-E3's weights are from 672769.
