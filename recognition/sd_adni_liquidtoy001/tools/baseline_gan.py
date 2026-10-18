@@ -187,11 +187,13 @@ def update_ema(shadow: nn.Module, live: nn.Module, decay: float) -> None:
 
 @torch.no_grad()
 def recalibrate_batchnorm(
-    generator, device, seed: int, batches: int = 32, size: int = 64
+    generator, device, seed: int, batches: int = 32, size: int = 64, label=None
 ):
     """A copy whose BatchNorm statistics match its own (averaged) weights.
 
     Seeded, so the same weights always give the same calibrated generator.
+    `label` fixes the label for a per-class GAN: the other label's embedding
+    was never trained, and mixing it in would distort the statistics.
     """
     calibrated = copy.deepcopy(generator).to(device)
     for module in calibrated.modules():
@@ -202,7 +204,12 @@ def recalibrate_batchnorm(
     calibrated.train()
     for _ in range(batches):
         z = torch.randn(size, calibrated.z_dim, generator=random, device=device)
-        labels = torch.randint(0, len(LABELS), (size,), generator=random, device=device)
+        if label is None:
+            labels = torch.randint(
+                0, len(LABELS), (size,), generator=random, device=device
+            )
+        else:
+            labels = torch.full((size,), label, device=device)
         calibrated(z, labels)
     return calibrated.eval()
 
@@ -335,7 +342,7 @@ def train(args):
     step, stop_reason = 0, "completed"
 
     def checkpoint(model, step_number, path, ratio=None):
-        calibrated = recalibrate_batchnorm(model, device, seed=args.seed)
+        calibrated = recalibrate_batchnorm(model, device, seed=args.seed, label=single)
         torch.save(
             {
                 "generator": calibrated.state_dict(),
@@ -387,7 +394,7 @@ def train(args):
             window = {"d_loss": 0.0, "g_loss": 0.0, "r1": 0.0, "count": 0}
 
         if step % args.sample_every == 0 or step == args.steps:
-            sampler = recalibrate_batchnorm(ema, device, seed=args.seed)
+            sampler = recalibrate_batchnorm(ema, device, seed=args.seed, label=single)
             with torch.no_grad():
                 save_grid(
                     sampler(fixed_z, fixed_labels),

@@ -86,6 +86,30 @@ class GanTest(unittest.TestCase):
         for a, b in zip(first.state_dict().values(), second.state_dict().values()):
             self.assertTrue(torch.equal(a, b))
 
+    def test_per_class_recalibration_uses_only_that_label(self):
+        # B2b's first runs calibrated each per-class GAN with random labels, so
+        # half the statistics came from the untrained label embedding.
+        def running_means(model):
+            return torch.cat(
+                [b for n, b in model.named_buffers() if n.endswith("running_mean")]
+            )
+
+        cpu = torch.device("cpu")
+        with torch.no_grad():
+            self.generator.label_embedding.weight[0].fill_(5.0)  # AD, "untrained"
+        nc_only = recalibrate_batchnorm(
+            self.generator, cpu, seed=3, batches=2, size=8, label=1
+        )
+        mixed = recalibrate_batchnorm(self.generator, cpu, seed=3, batches=2, size=8)
+        self.assertFalse(torch.allclose(running_means(nc_only), running_means(mixed)))
+        # The NC statistics must not depend on the AD embedding at all.
+        with torch.no_grad():
+            self.generator.label_embedding.weight[0].fill_(-5.0)
+        changed_ad = recalibrate_batchnorm(
+            self.generator, cpu, seed=3, batches=2, size=8, label=1
+        )
+        self.assertTrue(torch.equal(running_means(nc_only), running_means(changed_ad)))
+
     def save_checkpoint(self, generator, path, step):
         torch.save(
             {
