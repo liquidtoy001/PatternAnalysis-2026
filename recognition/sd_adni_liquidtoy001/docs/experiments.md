@@ -1095,3 +1095,42 @@ protocol's one rerun: S2 (both classes) and S3, with the calibration fix from
 the fixed single-class path (20 steps, two collapse checks, checkpoint written)
 passed. S3 now includes a frozen-VAE feature job, which the first chain lacked
 and the SSIM audit needs.
+
+## 2026-10-18 — Final evaluation: protocol, Stage 0 code, rehearsal submitted
+
+**Protocol.** [final-evaluation-protocol.md](final-evaluation-protocol.md),
+approved by the student and committed (85abb7b) before any code read the test
+split. The student also agreed to the blinded sort and approved deleting the
+E1 epoch-10 weights from Rangpur: the file's SHA-256 matched the local backup
+immediately before deletion, and home went from 1.1 GB to 2.7 GB free.
+
+**Stage 0 code** (dd872d7): batched DDIM in `modules.guided_ddim`,
+`ddim_invert` and `slerp`; `predict.py --batch-size`; `export_e0_adapter.py`
+(E0's adapter copied unchanged, in float32); `sample_vae.py`; per-class grids
+limited to the first 32 seeds; GPU jobs `final_real_features.py`,
+`final_cohort_features.py`, `membership.py`, `profile_sampling.py`,
+`interpolate_final.py`; local `final_metrics.py`, `final_ssim.py`,
+`final_tsne.py`, `blind_sort.py`; wrappers `final_*.sbatch` with one weights
+table (`final_models.sh`). Tests: 51 in the training environment and 18 in the
+analysis environment, each skipping what needs the other's libraries; the
+inversion test fails on two deliberate mutations. All wrappers were dry-run
+with stub commands, every tool imported, and the three local tools ran end to
+end on fake features in the jobs' file layout. Inception-v3 weights
+(torchvision ImageNet, SHA-256 0cc3c7bd75…) were downloaded on the login node
+with torchvision's hash check. Run directory `runs/final-20261019`: 24 files
+match dd872d7.
+
+**Known deviation, recorded before the rehearsal ran.** The protocol asks
+batched generation to reproduce the existing 64 images. That applies to E2, E3,
+R1-E2, B3 (the same `predict.py`, batch 1 before), B1 and B2 (unchanged
+generators). SD and E0 are now sampled with `predict.py`, like every other
+diffusion model, so all are compared under one sampler; their 7 October cohorts
+came from the diffusers pipeline in float32, so their images cannot be
+bit-identical. For these two, the rehearsal compares validation SSIM with the
+historical values instead.
+
+**Rehearsal** (validation stands in for test; no test slice read): generation at
+32 seeds per class for E2, E3, B3, SD, E0, B1 and B2 (jobs 672901-672907); real
+features 672908; cohort features on the existing 64-image cohorts 672909;
+membership for SD, E2, E3, B3 and R1-E2 (672910-672914); profiling 672915;
+interpolation for E2 and E3 (672916, 672917).
