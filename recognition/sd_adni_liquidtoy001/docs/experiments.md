@@ -1086,5 +1086,5 @@ either model, and home had 1.1 GiB after R1-E2's 1.7 GB checkpoint. E3 writes a
 for E3); the recipe and arguments are unchanged, as the dry run confirmed. This
 is the protocol's one infrastructure rerun, resubmitted as 672769, with cohort
 672770, features 672771 (historical E2 and E3 cohorts, both R1 cohorts) and
-audits 672772. The original dependants 669200-669203 were cancelled except
-669200, which had completed.
+audits 672772. The original dependants 669201-669203 could never start and were
+cancelled.
