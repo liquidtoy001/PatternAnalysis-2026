@@ -28,18 +28,20 @@ HAS_SCIPY = importlib.util.find_spec("scipy") is not None
 HAS_DIFFUSERS = importlib.util.find_spec("diffusers") is not None
 
 
-def write_cohort(folder: Path, count: int = 4, size: int = 32) -> list[dict]:
+def write_cohort(
+    folder: Path, count: int = 4, size: int = 32, first: int = 37200
+) -> list[dict]:
     folder.mkdir(parents=True)
     random = np.random.default_rng(0)
     records = []
     for i in range(count):
         label = ("AD", "NC")[i % 2]
-        name = f"{label}-{37200 + i}.png"
+        name = f"{label}-{first + i}.png"
         array = random.integers(0, 256, (size, size, 3), dtype=np.uint8)
         Image.fromarray(array).save(folder / name)
         digest = hashlib.sha256((folder / name).read_bytes()).hexdigest()
         records.append(
-            {"file": name, "label": label, "seed": 37200 + i, "png_sha256": digest}
+            {"file": name, "label": label, "seed": first + i, "png_sha256": digest}
         )
     (folder / "report.json").write_text(json.dumps({"records": records}))
     return records
@@ -110,6 +112,23 @@ class CohortReadingTest(unittest.TestCase):
         self.assertEqual(tuple(result.shape), (2, 3, 299, 299))
         expected = (0.5 - 0.485) / 0.229
         self.assertAlmostEqual(result[0, 0, 150, 150].item(), expected, places=5)
+
+
+class MergeTest(unittest.TestCase):
+    def test_chunks_join_with_hashes_and_the_first_grid(self):
+        from merge_cohorts import merge
+
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            write_cohort(folder / "a", count=4, first=37200)
+            write_cohort(folder / "b", count=4, first=37204)
+            Image.new("RGB", (8, 8)).save(folder / "a" / "grid-cfg7.5.png")
+            merged = merge([folder / "a", folder / "b"], folder / "merged")
+            self.assertEqual(len(merged["records"]), 8)
+            self.assertEqual(len(final_common.cohort_records(folder / "merged")), 8)
+            self.assertTrue((folder / "merged" / "grid-cfg7.5.png").exists())
+            with self.assertRaises(ValueError):
+                merge([folder / "a", folder / "a"], folder / "twice")
 
 
 @unittest.skipUnless(HAS_SCIPY, "needs SciPy (analysis environment)")
