@@ -1,13 +1,18 @@
 """Blinded real/synthetic sort by the student, a non-expert plausibility check
 (local; docs/final-evaluation-protocol.md).
 
-build: 16 AD and 16 NC held-out reference slices plus 16 AD and 16 NC samples
-of the recommended model, all shown in grayscale at 256 px without names,
-shuffled with seed 3710, in a private HTML page; the key goes to a separate
-private file.
+extract (on Rangpur): 16 AD and 16 NC slices drawn at random from the whole
+test split (seed 3710), so the real images cover every slice position, as the
+samples do; saved privately without identifiers.
 
-    python tools/blind_sort.py build --real outputs/final-real-<job> \
-        --cohort outputs/final-e3 --output outputs/blind-sort
+    python tools/blind_sort.py extract --output outputs/blind-real.npz
+
+build: those 32 slices plus 16 AD and 16 NC samples of the recommended model,
+all shown in grayscale at 256 px without names, shuffled with seed 3710, in a
+private HTML page; the key goes to a separate private file.
+
+    python tools/blind_sort.py build --real outputs/blind-real.npz \
+        --cohort outputs/final-e2 --output outputs/blind-sort
 
 score: compares the answers saved from the page with the key.
 
@@ -25,7 +30,6 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
-from scipy import stats
 
 PER_CLASS = 16
 SEED = 3710
@@ -77,17 +81,38 @@ document.getElementById('save').onclick = () => {{
 """
 
 
+def extract(args):
+    """Random test slices for the sort; run where the data is (Rangpur)."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from dataset import ADNISliceDataset
+    from final_common import ADNI_ROOT, MANIFEST, balanced_sample
+
+    data = ADNISliceDataset(ADNI_ROOT, MANIFEST, "test", 256, verify_hash=True)
+    chosen = balanced_sample([r["class_name"] for r in data.rows], PER_CLASS, SEED)
+    images = [
+        ((data[i]["pixel_values"][0] + 1) * 127.5).round().byte().numpy()
+        for i in chosen
+    ]
+    is_nc = [data.rows[i]["class_name"] == "NC" for i in chosen]
+    np.savez(args.output, images=np.stack(images), is_nc=np.array(is_nc, dtype=np.int8))
+    print(f"saved {len(images)} test slices to", args.output)
+
+
 def build(args):
     args.output.mkdir(parents=True, exist_ok=False)
     random = np.random.default_rng(SEED)
-    real = np.load(args.real / "private-real-features.npz")
-    items = []
-    for c, label in ((0, "AD"), (1, "NC")):
-        for i in random.choice(
-            np.flatnonzero(real["heldout_ref_is_nc"] == c), PER_CLASS, replace=False
-        ):
-            image = Image.fromarray(real["heldout_ref_images"][i])
-            items.append({"truth": "real", "label": label, "image": image})
+    real = np.load(args.real)
+    items = [
+        {
+            "truth": "real",
+            "label": "NC" if is_nc else "AD",
+            "image": Image.fromarray(image),
+        }
+        for image, is_nc in zip(real["images"], real["is_nc"])
+    ]
     records = json.loads((args.cohort / "report.json").read_text())["records"]
     for label in ("AD", "NC"):
         pool = [r for r in records if r["label"] == label]
@@ -115,6 +140,8 @@ def build(args):
 
 
 def score(args):
+    from scipy import stats
+
     key = json.loads(args.key.read_text())
     answers = json.loads(args.answers.read_text())
     if len(answers) != len(key):
@@ -147,6 +174,8 @@ def main():
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     commands = parser.add_subparsers(dest="command", required=True)
+    e = commands.add_parser("extract")
+    e.add_argument("--output", type=Path, required=True)
     b = commands.add_parser("build")
     b.add_argument("--real", type=Path, required=True)
     b.add_argument("--cohort", type=Path, required=True)
@@ -156,7 +185,7 @@ def main():
     s.add_argument("--answers", type=Path, required=True)
     s.add_argument("--output", type=Path)
     args = parser.parse_args()
-    build(args) if args.command == "build" else score(args)
+    {"extract": extract, "build": build, "score": score}[args.command](args)
 
 
 if __name__ == "__main__":

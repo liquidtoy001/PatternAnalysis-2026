@@ -231,18 +231,17 @@ class BlindSortTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as folder:
             folder = Path(folder)
-            (folder / "real").mkdir()
             np.savez(
-                folder / "real" / "private-real-features.npz",
-                heldout_ref_images=np.random.default_rng(5).integers(
-                    0, 256, (40, 64, 64), dtype=np.uint8
+                folder / "real.npz",
+                images=np.random.default_rng(5).integers(
+                    0, 256, (32, 64, 64), dtype=np.uint8
                 ),
-                heldout_ref_is_nc=np.array([0, 1] * 20, dtype=np.int8),
+                is_nc=np.array([0] * 16 + [1] * 16, dtype=np.int8),
             )
             write_cohort(folder / "cohort", count=40)
             blind_sort.build(
                 argparse.Namespace(
-                    real=folder / "real",
+                    real=folder / "real.npz",
                     cohort=folder / "cohort",
                     output=folder / "out",
                 )
