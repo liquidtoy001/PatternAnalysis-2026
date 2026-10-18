@@ -311,15 +311,15 @@ class ExponentialMovingAverage:
                     param.copy_(live[name])
 
 
-def save_weights(weights: dict[str, torch.Tensor], path: Path) -> None:
-    """Store trained weights as float16 safetensors (about 1.7 GB for a full UNet)."""
+def save_weights(
+    weights: dict[str, torch.Tensor], path: Path, dtype=torch.float16
+) -> None:
+    """Store trained weights as safetensors, float16 by default (about 1.7 GB
+    for a full UNet)."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
     save_file(
-        {
-            n: w.detach().to("cpu", torch.float16).contiguous()
-            for n, w in weights.items()
-        },
+        {n: w.detach().to("cpu", dtype).contiguous() for n, w in weights.items()},
         str(temporary),
     )
     temporary.replace(path)
@@ -372,6 +372,9 @@ def guided_ddim(
     scheduler.set_timesteps(steps, device=initial.device)
     latents = initial * scheduler.init_noise_sigma
     guided = guidance > 1.0
+    # One prompt embedding serves a whole batch of starting latents.
+    condition = condition.expand(len(initial), -1, -1)
+    uncondition = uncondition.expand(len(initial), -1, -1)
     context = torch.cat([uncondition, condition]) if guided else condition
     for timestep in scheduler.timesteps:
         model_input = torch.cat([latents, latents]) if guided else latents
@@ -383,6 +386,49 @@ def guided_ddim(
             prediction = unconditional + guidance * (conditional - unconditional)
         latents = scheduler.step(prediction, timestep, latents, eta=eta).prev_sample
     return latents
+
+
+@torch.no_grad()
+def ddim_invert(
+    unet: UNet2DConditionModel,
+    schedule_config,
+    latents: torch.Tensor,
+    condition: torch.Tensor,
+    steps: int = 30,
+) -> torch.Tensor:
+    """Deterministic DDIM inversion without guidance: a clean latent -> the
+    starting noise that guided_ddim(..., guidance=1.0) maps back to it.
+
+    Runs the DDIM update with the time order reversed, using the noise predicted
+    at the current (less noisy) step, the usual first-order approximation.
+    """
+    scheduler = DDIMScheduler.from_config(schedule_config)
+    scheduler.set_timesteps(steps, device=latents.device)
+    alphas = scheduler.alphas_cumprod.to(latents.device)
+    timesteps = scheduler.timesteps.flip(0)  # from little noise to the most
+    condition = condition.expand(len(latents), -1, -1)
+    previous_alpha = scheduler.final_alpha_cumprod.to(latents.device)
+    for timestep in timesteps:
+        with autocast(latents.device):
+            noise = unet(latents, timestep, condition).sample.float()
+        alpha = alphas[timestep]
+        clean = (latents - (1 - previous_alpha).sqrt() * noise) / previous_alpha.sqrt()
+        latents = alpha.sqrt() * clean + (1 - alpha).sqrt() * noise
+        previous_alpha = alpha
+    return latents / scheduler.init_noise_sigma
+
+
+def slerp(a: torch.Tensor, b: torch.Tensor, weight: float) -> torch.Tensor:
+    """Spherical interpolation between two noise tensors, which keeps the norm
+    a Gaussian sample is expected to have; linear mixing would shrink it."""
+    flat_a, flat_b = a.flatten(), b.flatten()
+    cosine = torch.dot(flat_a, flat_b) / (flat_a.norm() * flat_b.norm())
+    angle = torch.arccos(cosine.clamp(-1, 1))
+    if angle.abs() < 1e-6:
+        return (1 - weight) * a + weight * b
+    return (
+        torch.sin((1 - weight) * angle) * a + torch.sin(weight * angle) * b
+    ) / torch.sin(angle)
 
 
 @torch.no_grad()

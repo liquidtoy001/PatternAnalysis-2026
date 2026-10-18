@@ -92,6 +92,12 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=32, help="seeds per class")
     parser.add_argument("--guidance", type=float, nargs="+", default=[7.5])
     parser.add_argument("--steps", type=int, default=30)
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1,
+        help="images denoised together; each keeps its own seeded starting noise",
+    )
     parser.add_argument("--model-dir", type=Path, default=Path("models/sd15-smoke"))
     parser.add_argument("--vae-dir", type=Path, default=Path("models/sd15-vae"))
     parser.add_argument("--device", default="cuda")
@@ -117,39 +123,45 @@ def main() -> None:
     schedule = load_noise_schedule(args.model_dir)
 
     records = []
+    seeds = list(range(args.first_seed, args.first_seed + args.count))
+    batches = [
+        seeds[i : i + args.batch_size] for i in range(0, len(seeds), args.batch_size)
+    ]
     for guidance in args.guidance:
         tiles = []
         for label in LABELS:
-            for seed in range(args.first_seed, args.first_seed + args.count):
-                start = initial_noise(seed, 256, device)
-                latent = guided_ddim(
+            for batch in batches:
+                starts = [initial_noise(seed, 256, device) for seed in batch]
+                latents = guided_ddim(
                     unet,
                     schedule.config,
-                    start,
+                    torch.cat(starts),
                     embeddings[label],
                     embeddings["empty"],
                     guidance,
                     steps=args.steps,
                 )
-                image = decode(vae, latent)[0].permute(1, 2, 0).cpu().numpy()
-                name = f"{label}-{seed}-cfg{guidance}.png"
-                tile = Image.fromarray((image * 255).round().astype(np.uint8))
-                tile.save(args.output / name)
-                stats = appearance(image)
-                records.append(
-                    {
-                        "file": name,
-                        "label": label,
-                        "seed": seed,
-                        "guidance": guidance,
-                        "initial_noise_sha256": hashlib.sha256(
-                            start.cpu().numpy().tobytes()
-                        ).hexdigest(),
-                        "png_sha256": digest(args.output / name),
-                        **stats,
-                    }
-                )
-                tiles.append((f"{label} {seed}", tile))
+                images = decode(vae, latents).permute(0, 2, 3, 1).cpu().numpy()
+                for seed, start, image in zip(batch, starts, images):
+                    name = f"{label}-{seed}-cfg{guidance}.png"
+                    tile = Image.fromarray((image * 255).round().astype(np.uint8))
+                    tile.save(args.output / name)
+                    records.append(
+                        {
+                            "file": name,
+                            "label": label,
+                            "seed": seed,
+                            "guidance": guidance,
+                            "initial_noise_sha256": hashlib.sha256(
+                                start.cpu().numpy().tobytes()
+                            ).hexdigest(),
+                            "png_sha256": digest(args.output / name),
+                            **appearance(image),
+                        }
+                    )
+                    # The uncurated grid always shows the first 32 seeds per class.
+                    if seed < args.first_seed + 32:
+                        tiles.append((f"{label} {seed}", tile))
         save_grids(tiles, 8, 256, args.output, guidance)
 
     print(f"{'label':<6}{'cfg':>6}{'n':>4}{'channel spread':>17}{'border mean':>14}")
@@ -177,6 +189,7 @@ def main() -> None:
         "prompts": PROMPTS,
         "scheduler": "DDIM",
         "inference_steps": args.steps,
+        "batch_size": args.batch_size,
         "eta": 0.0,
         "guidance_values": args.guidance,
         "image_size": 256,

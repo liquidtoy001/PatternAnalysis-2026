@@ -64,24 +64,26 @@ def atomic_save(state, path):
 
 
 @torch.no_grad()
-def generate(model, output):
+def generate(model, output, count=32, device="cuda"):
+    """Seeds 37200 onwards, `count` per class; the grid shows the first 32."""
     model.eval()
     records = []
     grid = Image.new("L", (128 * 8, 152 * 8), 255)
     draw = ImageDraw.Draw(grid)
     for label_index, label in enumerate(("AD", "NC")):
-        for index, seed in enumerate(range(37200, 37232)):
-            generator = torch.Generator(device="cuda").manual_seed(seed)
-            latent = torch.randn((1, 64), generator=generator, device="cuda")
-            pixels = model.decode(latent, torch.tensor([label_index], device="cuda"))
+        for index, seed in enumerate(range(37200, 37200 + count)):
+            generator = torch.Generator(device=device).manual_seed(seed)
+            latent = torch.randn((1, 64), generator=generator, device=device)
+            pixels = model.decode(latent, torch.tensor([label_index], device=device))
             if not torch.isfinite(pixels).all():
                 raise RuntimeError("Non-finite generation")
             image = Image.fromarray(pixels[0, 0].mul(255).round().byte().cpu().numpy())
             name = f"vae-{label}-{seed}.png"
             image.save(output / name)
-            x, y = (index % 8) * 128, (label_index * 4 + index // 8) * 152
-            grid.paste(image, (x, y))
-            draw.text((x + 2, y + 130), f"{label} {seed}", fill=0)
+            if index < 32:
+                x, y = (index % 8) * 128, (label_index * 4 + index // 8) * 152
+                grid.paste(image, (x, y))
+                draw.text((x + 2, y + 130), f"{label} {seed}", fill=0)
             records.append(
                 {
                     "file": name,

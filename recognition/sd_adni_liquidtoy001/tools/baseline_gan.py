@@ -519,7 +519,7 @@ def load_generator(path, device):
 
 @torch.no_grad()
 def generate(args):
-    """The 64 fixed seeds (37200-37231 per class) as the generator's noise.
+    """Fixed seeds from 37200, `count` per class, as the generator's noise.
 
     Either one conditional checkpoint (B2), or one checkpoint per class (B2b,
     --class-checkpoint AD=PATH --class-checkpoint NC=PATH).
@@ -568,8 +568,9 @@ def generate(args):
                     ).hexdigest(),
                 }
             )
-            tiles.append(image)
-            tile_labels.append(label_index)
+            if seed < args.first_seed + 32:  # the grid shows the first 32 per class
+                tiles.append(image)
+                tile_labels.append(label_index)
     save_grid(torch.cat(tiles), torch.tensor(tile_labels), args.output / "grid.png")
     report = {
         "checkpoints": used,

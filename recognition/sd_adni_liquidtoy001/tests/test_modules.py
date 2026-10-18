@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 import torch
 from diffusers import (
@@ -25,10 +26,12 @@ from modules import (  # noqa: E402
     ExponentialMovingAverage,
     condition_batch,
     configure_trainable,
+    ddim_invert,
     diffusion_loss,
     guided_ddim,
     load_weights,
     save_weights,
+    slerp,
     training_noise,
 )
 
@@ -194,6 +197,63 @@ class SamplerTest(unittest.TestCase):
         self.assertTrue(
             torch.allclose(ours, official, atol=1e-5), (ours - official).abs().max()
         )
+
+    def test_a_batch_gives_the_same_latents_as_one_at_a_time(self):
+        unet, schedule = tiny_unet().eval(), sd_schedule()
+        embeddings = tiny_embeddings()
+        starts = torch.randn((3, 4, 8, 8), generator=torch.Generator().manual_seed(5))
+
+        def sample(start):
+            return guided_ddim(
+                unet,
+                schedule.config,
+                start,
+                embeddings["NC"],
+                embeddings["empty"],
+                7.5,
+                steps=4,
+            )
+
+        together = sample(starts)
+        alone = torch.cat([sample(s.unsqueeze(0)) for s in starts])
+        # Only float rounding differs between batch shapes (about 1e-6 per
+        # forward pass, amplified by guidance 7.5 over the steps).
+        self.assertTrue(torch.allclose(together, alone, atol=1e-4))
+
+    def test_inversion_reproduces_its_input_when_the_noise_ignores_the_image(self):
+        # With a noise prediction that depends on the timestep only, DDIM
+        # inversion is exact, so sampling from the inverted noise must give the
+        # input back. A wrong timestep order or alpha would break this.
+        pattern = torch.randn((1, 4, 8, 8), generator=torch.Generator().manual_seed(3))
+
+        class TimestepOnly(torch.nn.Module):
+            def forward(self, latents, timestep, context):
+                scale = 1 + float(timestep) / 1000
+                return SimpleNamespace(sample=(scale * pattern).expand_as(latents))
+
+        stub, schedule = TimestepOnly(), sd_schedule()
+        clean = torch.randn((2, 4, 8, 8), generator=torch.Generator().manual_seed(4))
+        context = tiny_embeddings()["AD"]
+        noise = ddim_invert(stub, schedule.config, clean, context, steps=10)
+        back = guided_ddim(
+            stub, schedule.config, noise, context, context, 1.0, steps=10
+        )
+        self.assertTrue(
+            torch.allclose(back, clean, atol=1e-4), (back - clean).abs().max()
+        )
+        self.assertGreater((noise - clean).abs().max().item(), 0.1)
+
+    def test_slerp_endpoints_and_norm(self):
+        generator = torch.Generator().manual_seed(6)
+        a = torch.randn((1, 4, 32, 32), generator=generator)
+        b = torch.randn((1, 4, 32, 32), generator=generator)
+        self.assertTrue(torch.allclose(slerp(a, b, 0.0), a, atol=1e-5))
+        self.assertTrue(torch.allclose(slerp(a, b, 1.0), b, atol=1e-5))
+        middle = slerp(a, b, 0.5)
+        linear = 0.5 * (a + b)
+        # Spherical mixing keeps a Gaussian sample's norm; linear mixing shrinks it.
+        self.assertAlmostEqual(middle.norm().item() / a.norm().item(), 1.0, delta=0.05)
+        self.assertLess(linear.norm().item() / a.norm().item(), 0.8)
 
 
 class WeightFileTest(unittest.TestCase):
