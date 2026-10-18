@@ -31,8 +31,15 @@ case "$name" in
         ;;
     b2) $python tools/baseline_gan.py generate --checkpoint "$B2_CHECKPOINT" --output "$out" \
         --first-seed "$first" --count "$count" ;;
-    b2b) $python tools/baseline_gan.py generate --class-checkpoint "AD=$B2B_AD" \
-        --class-checkpoint "NC=$B2B_NC" --output "$out" --first-seed "$first" --count "$count" ;;
+    b2b)
+        # Only the classes whose GAN produced a result (the B2b protocol).
+        classes=()
+        [ -f "$B2B_AD" ] && classes+=(--class-checkpoint "AD=$B2B_AD")
+        [ -f "$B2B_NC" ] && classes+=(--class-checkpoint "NC=$B2B_NC")
+        [ "${#classes[@]}" -gt 0 ] || { echo "no B2b class has a result" >&2; exit 2; }
+        $python tools/baseline_gan.py generate "${classes[@]}" --allow-partial \
+            --output "$out" --first-seed "$first" --count "$count"
+        ;;
     *)
         if [ "$name" = e0 ] && [ ! -f "${WEIGHTS[e0]}" ]; then
             $python tools/export_e0_adapter.py --checkpoint "$E0_CHECKPOINT" --output "${WEIGHTS[e0]}"

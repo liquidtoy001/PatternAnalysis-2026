@@ -123,10 +123,13 @@ class GanTest(unittest.TestCase):
             path,
         )
 
-    def run_generate(self, folder, checkpoint=None, class_checkpoint=()):
+    def run_generate(
+        self, folder, checkpoint=None, class_checkpoint=(), allow_partial=False
+    ):
         args = argparse.Namespace(
             checkpoint=checkpoint,
             class_checkpoint=list(class_checkpoint),
+            allow_partial=allow_partial,
             output=folder / "cohort",
             first_seed=37200,
             count=2,
@@ -165,6 +168,14 @@ class GanTest(unittest.TestCase):
                 self.run_generate(
                     folder / "again", class_checkpoint=[f"AD={folder / 'ad.pt'}"]
                 )
+            # B2b: a class without a result is left out only when asked.
+            partial = self.run_generate(
+                folder / "partial",
+                class_checkpoint=[f"NC={folder / 'nc.pt'}"],
+                allow_partial=True,
+            )
+            self.assertEqual([r["label"] for r in partial["records"]], ["NC", "NC"])
+            self.assertEqual(set(partial["checkpoints"]), {"NC"})
 
 
 class ScratchUnetTest(unittest.TestCase):

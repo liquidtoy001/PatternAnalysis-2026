@@ -157,7 +157,7 @@ def main():
                 )
                 for metric in ("nearest_ssim", "fixed_ssim")
             }
-            for label in ("all", "AD", "NC")
+            for label in ("all", *sorted({r["label"] for r in rows}))
         }
         report["groups"][name]["all"]["nearest_ssim"]["mean_ci95"] = bootstrap_mean_ci(
             np.array([r["nearest_ssim"] for r in rows])

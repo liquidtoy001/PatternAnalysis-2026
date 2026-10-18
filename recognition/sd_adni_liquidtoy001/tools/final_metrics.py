@@ -103,7 +103,40 @@ def balanced(is_nc: np.ndarray, per_class: int, seed: int) -> np.ndarray:
 
 
 def distribution_block(fake, fake_is_nc, real, real_is_nc) -> dict:
-    """FID, KID and PRDC of one generated set against the held-out slices."""
+    """FID, KID and PRDC of one generated set against the held-out slices.
+
+    A cohort with one class only (B2b, if one GAN has no result) is compared
+    with that class's held-out slices only.
+    """
+    present = sorted(set(fake_is_nc.tolist()))
+    if len(present) == 1:
+        c = present[0]
+        same = real[real_is_nc == c]
+        draws = [
+            prdc(
+                same[
+                    np.random.default_rng(SEED + d).choice(
+                        len(same), min(len(fake), len(same)), replace=False
+                    )
+                ],
+                fake,
+            )
+            for d in range(PRDC_DRAWS)
+        ]
+        value = fid(fake, same)
+        return {
+            "classes": [LABELS[c]],
+            "fid": value,
+            "kid": kid(fake, same),
+            "prdc": {
+                m: {
+                    "mean": float(np.mean([x[m] for x in draws])),
+                    "sd": float(np.std([x[m] for x in draws])),
+                }
+                for m in draws[0]
+            },
+            "per_class_fid": {LABELS[c]: value},
+        }
     per_class = int(min(np.sum(real_is_nc == 0), np.sum(real_is_nc == 1)))
     pool = balanced(real_is_nc, per_class, SEED)
     draws = [

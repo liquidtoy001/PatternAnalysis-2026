@@ -163,6 +163,8 @@ def main():
         within = {}
         for label in ("AD", "NC"):
             rows = [i for i, x in enumerate(labels) if x == label]
+            if len(rows) < 2:  # B2b may have a result for one class only
+                continue
             pairs = torch.pdist(gray[rows]) / gray.shape[1] ** 0.5
             within[label] = summary(pairs.cpu().numpy())
         panel = closest_panel(

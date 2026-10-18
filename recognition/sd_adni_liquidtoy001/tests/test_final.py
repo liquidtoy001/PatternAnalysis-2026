@@ -169,6 +169,21 @@ class DistributionMeasuresTest(unittest.TestCase):
             (0.0, 0.0, 0.0, 0.0),
         )
 
+    def test_a_one_class_cohort_is_compared_with_that_class_only(self):
+        random = np.random.default_rng(6)
+        real = np.concatenate(
+            [random.normal(size=(300, 4)), random.normal(size=(300, 4)) + 5]
+        )
+        real_is_nc = np.array([0] * 300 + [1] * 300, dtype=np.int8)
+        fake = random.normal(size=(64, 4)) + 5  # like the NC slices
+        block = self.m.distribution_block(
+            fake, np.ones(64, dtype=np.int8), real, real_is_nc
+        )
+        self.assertEqual(block["classes"], ["NC"])
+        self.assertLess(block["fid"], 1.0)
+        self.assertGreater(block["prdc"]["coverage"]["mean"], 0.5)
+        self.assertEqual(list(block["per_class_fid"]), ["NC"])
+
     def test_training_preference(self):
         random = np.random.default_rng(2)
         heldout = random.uniform(0.05, 0.1, 500)

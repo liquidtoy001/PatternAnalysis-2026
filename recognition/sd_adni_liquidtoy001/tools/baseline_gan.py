@@ -522,7 +522,8 @@ def generate(args):
     """Fixed seeds from 37200, `count` per class, as the generator's noise.
 
     Either one conditional checkpoint (B2), or one checkpoint per class (B2b,
-    --class-checkpoint AD=PATH --class-checkpoint NC=PATH).
+    --class-checkpoint AD=PATH --class-checkpoint NC=PATH). With --allow-partial,
+    a class without a result is left out, as the B2b protocol allows.
     """
     device = torch.device(args.device)
     if bool(args.checkpoint) == bool(args.class_checkpoint):
@@ -531,12 +532,16 @@ def generate(args):
         sources = {label: args.checkpoint for label in LABELS}
     else:
         sources = dict(item.split("=", 1) for item in args.class_checkpoint)
-        if set(sources) != set(LABELS):
+        if not set(sources) <= set(LABELS) or (
+            set(sources) != set(LABELS) and not args.allow_partial
+        ):
             raise SystemExit(f"Need a checkpoint for each of {LABELS}")
         sources = {label: Path(path) for label, path in sources.items()}
     args.output.mkdir(parents=True, exist_ok=False)
     records, tiles, tile_labels, used = [], [], [], {}
     for label_index, label in enumerate(LABELS):
+        if label not in sources:
+            continue
         generator, state = load_generator(sources[label], device)
         used[label] = {
             "checkpoint": str(sources[label]),
@@ -624,6 +629,11 @@ def parse_args():
         default=[],
         metavar="LABEL=PATH",
         help="B2b: one per class instead of --checkpoint",
+    )
+    generate_parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="B2b: generate only the classes given a --class-checkpoint",
     )
     generate_parser.add_argument("--output", type=Path, required=True)
     generate_parser.add_argument("--first-seed", type=int, default=37200)
