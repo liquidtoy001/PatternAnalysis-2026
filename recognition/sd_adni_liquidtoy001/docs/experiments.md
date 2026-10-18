@@ -1088,3 +1088,10 @@ is the protocol's one infrastructure rerun, resubmitted as 672769, with cohort
 672770, features 672771 (historical E2 and E3 cohorts, both R1 cohorts) and
 audits 672772. The original dependants 669201-669203 could never start and were
 cancelled.
+
+**Rerun decision (2026-10-18).** The student approved the rerun. It is the
+protocol's one rerun: S2 (both classes) and S3, with the calibration fix from
+67d4057 and nothing else changed. The probe is not repeated; a CPU smoke run of
+the fixed single-class path (20 steps, two collapse checks, checkpoint written)
+passed. S3 now includes a frozen-VAE feature job, which the first chain lacked
+and the SSIM audit needs.
