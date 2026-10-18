@@ -1213,3 +1213,87 @@ audit jobs (672814-672816) were cancelled.
 **Code frozen.** The commit recording this entry is the frozen commit; the run
 directory is refreshed to it and verified before any test job is submitted.
 B2b is excluded; R1-E3's weights are from 672769.
+
+## 2026-10-19 — Test-split results and the recommended model
+
+**Run.** Frozen commit 2104414 (run directory verified against it). All 30
+jobs and the cohort job completed with exit 0:0: real features 673089 (9 min
+44 s; 4,700 test slices read once, hash-checked); cohorts at batch size 1, SD
+673090, E0 673091 and B3 673092 whole on `comp3710`, E2, E3, R1-E2 and R1-E3
+in four seed chunks each (673093-673108, 8-12 min each) joined by
+`merge_cohorts.py`, B1 673109, B2 673110; membership 673111-673116;
+interpolation 673117, 673118; cohort features 673504 (5 min 42 s). Each
+cohort holds 1,024 samples, 512 per class; all 9,216 PNGs matched their
+SHA-256 after download. B2b is excluded (no result in either class). Metrics,
+SSIM, t-SNE and figures ran locally. Aggregates (no identifiers):
+`test-metrics-2026-10-19.json`, `test-ssim-2026-10-19.json`,
+`test-real-reference-2026-10-19.json`, `test-cohorts-2026-10-19.json`,
+`test-membership-2026-10-19.json`, `test-interpolation-2026-10-19.json`,
+`test-autopsy-e2-2026-10-19.json`; tables are printed by
+`tools/results_tables.py`.
+
+| Test split, 1,024 samples | SSIM (95% CI) | KID x 100 | Coverage | Precision | Recall | M2 pixel (95% CI) | Membership AUC minus SD (95% CI) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Real floor (validation) | 0.707 | 0.06 | 0.813 | 0.754 | 0.755 | calibration | |
+| SD zero-shot | 0.088 | 29.25 | 0.000 | 0.000 | 0.476 | +0.074 | control, AUC 0.499 |
+| E0 | 0.328 | 10.92 | 0.028 | 0.079 | 0.001 | +0.027 | not measured |
+| **E2** | **0.704** (0.703-0.706) | **1.27** | **0.274** | 0.267 | 0.849 | -0.0064 (-0.0131 to +0.0004) | **+0.237** (0.219-0.255) |
+| R1-E2 | 0.702 | 1.19 | 0.288 | 0.302 | 0.816 | -0.0043 (-0.0111 to +0.0027) | +0.234 (0.216-0.252) |
+| **E3** | 0.696 (0.694-0.698) | 4.25 | 0.066 | 0.065 | 0.675 | +0.0257 | +0.030 (0.014-0.047) |
+| R1-E3 | 0.694 | 4.19 | 0.035 | 0.044 | 0.751 | +0.0106 | +0.032 (0.016-0.049) |
+| B3 | 0.703 | 1.99 | 0.242 | 0.279 | 0.803 | -0.333 (-0.352 to -0.315) | +0.501 (AUC 1.000) |
+| B1 VAE | 0.718 | 23.84 | 0.000 | 0.000 | 0.000 | -0.031 | not measured |
+| B2 GAN | 0.582 | 38.98 | 0.000 | 0.000 | 0.000 | +0.075 | not measured |
+
+Real references on test: mean nearest-training RMSE of test slices 0.0745
+(closest 0.0424); calibration log ratio (validation slices) -0.086 in pixel
+space. M2 in VAE space (secondary): E2 -0.0145 (-0.0233 to -0.0058), R1-E2
+-0.0122, E3 +0.0269, B3 -0.272. True-positive rate at 1% false positives:
+E2 13.5%, E3 1.8%, B3 100%, SD 3.0%. Near-empty samples: none in 1,024 for
+E2, R1-E2, E3, R1-E3 or B3.
+
+**M4 closest pairs** (private panels, visual review). E2 and E3: the five
+closest pairs share outline and pose but differ in gyral folding, ventricle
+shape and contrast: no copies. B3: three AD seeds (37554, 37563, 37442)
+reproduce the same training slice and two NC seeds another one, at RMSE
+0.017-0.021, half the closest real-to-real distance: near-copies.
+
+**Interpolation.** No I1 path of E2 or E3 has an interior frame closer to a
+training slice than the closest real pair; one E2 NC path (37202 to 37203)
+changes brightness and size abruptly between frames 5 and 6. I2 inversion
+reconstructs its training slice to RMSE 0.04-0.06, and the distance to it
+rises along the path to about 0.06, a typical sample distance.
+
+**Recommended model, by the rule fixed in the protocol.**
+
+1. Exclusion: both candidates pass SSIM > 0.6 (E2 0.704, E3 0.696; 99% of
+   samples above 0.6) and neither shows a copy.
+2. Memorisation signal: E2 has one (M3 +0.237, interval far from 0; its
+   primary M2 interval touches 0). E3 also has one: its M3 interval
+   (0.014-0.047) excludes 0, replicated by R1-E3. Both have a signal, so this
+   step does not decide.
+3. Coverage: E2 0.274 against E3 0.066; the difference (0.208) far exceeds the
+   seed spread (E2 0.014, E3 0.031).
+
+**The recommended model is E2.** The rule treats a memorisation signal as
+present or absent; it does not weigh size. E2's model-level leak is about eight
+times E3's in AUC excess (0.237 against 0.030) and seven times in true
+positives at 1% false positives (13.5% against 1.8%), while its samples are
+at most 0.6% (pixel) to 1.4% (VAE features) closer to training slices than
+held-out slices would be. This is reported with the recommendation (Section
+10 of the README): E2's samples are low-risk to share, its weights are not.
+
+**Autopsy** (rule: the recommended model's 5 lowest-SSIM samples plus every
+near-empty one; none was near-empty). All five are NC: NC-37263 (0.536) and
+NC-37595 (0.586) are over-bright with anatomy cut off at the frame edge;
+NC-37407 (0.563) has a ragged, disordered posterior fossa; NC-37489 (0.577)
+has a vertical stripe running from the brainstem to the image edge and a bright
+outer rim; NC-37341 (0.587) has its lower half replaced by dark, mottled
+texture. Bright rims also occur in some training slices (imperfect skull
+stripping), so that feature is likely learned rather than invented; the other
+causes are hypotheses, not verified.
+
+**Not yet done:** the blinded sort. Its first build used the one-per-patient
+SSIM references, which are middle slices only and would give the sort a
+slice-position cue; it was discarded unseen and the tool now draws random test
+slices (39dff86), to be extracted on Rangpur when the connection returns.

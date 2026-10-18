@@ -102,15 +102,15 @@ def memorisation_table(metrics):
         else:
             mia_cells = "n/a | n/a | n/a"
         rows.append(
-            "| {} | {:.4f} ({:.4f}) | {:+.3f} ({}) | {:+.0f}% | {:+.3f} ({}) | {} |".format(
+            "| {} | {:.4f} ({:.4f}) | {:+.4f} ({}) | {:+.1f}% | {:+.4f} ({}) | {} |".format(
                 NAMES[name],
                 m1["mean"],
                 m1["min"],
                 pixel["difference"],
-                interval(pixel["difference_ci95"]),
+                interval(pixel["difference_ci95"], 4),
                 pixel["closer_to_training_percent"],
                 vae["difference"],
-                interval(vae["difference_ci95"]),
+                interval(vae["difference_ci95"], 4),
                 mia_cells,
             )
         )
