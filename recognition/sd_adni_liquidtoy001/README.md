@@ -489,23 +489,23 @@ Representative failures from actual runs on Rangpur, each with its root cause.
    gyri. *Root cause:* 92 M parameters trained from scratch on 21 k slices
    overfit (validation loss minimal at epoch 23, rising for 75 epochs); this is
    the replication Somepalli et al. (2023) describe.
-5. **The recommended model's worst test samples (E2).** Selected by the rule
-   fixed in advance (the 5 lowest SSIM of 1,024, plus any near-empty sample;
-   there were none), so they are not cherry-picked:
+**5. The recommended model's worst test samples (E2).** Selected by the rule
+fixed in advance (the 5 lowest SSIM of 1,024, plus any near-empty sample; there
+were none), so they are not cherry-picked:
 
-   ![E2's five lowest-SSIM test samples](docs/figures/autopsy-e2.png)
+![E2's five lowest-SSIM test samples](docs/figures/autopsy-e2.png)
 
-   | Sample (SSIM) | What is wrong | Likely trigger (not verified) |
-   | --- | --- | --- |
-   | NC-37263 (0.536), NC-37595 (0.586) | over-bright, flattened grey-white contrast; anatomy cut off at the frame edge | guidance 7.5 pushes intensities to extremes; off-centre slices are rare in training |
-   | NC-37407 (0.563) | posterior fossa (brainstem, cerebellum) dissolves into ragged, disordered tissue | the region varies most between slices and subjects, so the model averages incompatible shapes |
-   | NC-37489 (0.577) | a stripe runs from the brainstem to the image edge; a bright rim surrounds the cortex | some training slices keep skull-stripping remnants, which the model reproduces and exaggerates |
-   | NC-37341 (0.587) | lower half replaced by dark, mottled texture with no anatomy | the same posterior-fossa failure, more severe |
+| Sample (SSIM) | What is wrong | Likely trigger (not verified) |
+| --- | --- | --- |
+| NC-37263 (0.536), NC-37595 (0.586) | over-bright, flattened grey-white contrast; anatomy cut off at the frame edge | guidance 7.5 pushes intensities to extremes; off-centre slices are rare in training |
+| NC-37407 (0.563) | posterior fossa (brainstem, cerebellum) dissolves into ragged, disordered tissue | the region varies most between slices and subjects, so the model averages incompatible shapes |
+| NC-37489 (0.577) | a stripe runs from the brainstem to the image edge; a bright rim surrounds the cortex | some training slices keep skull-stripping remnants, which the model reproduces and exaggerates |
+| NC-37341 (0.587) | lower half replaced by dark, mottled texture with no anatomy | the same posterior-fossa failure, more severe |
 
-   All five are NC, the class with twice the subjects and more variety. These
-   are the "physiologically impossible tissue junctions" of Section 2.4: rare,
-   but present, and the reason E2's precision (0.27) is far below real slices'
-   (0.75). A downstream model trained on unfiltered samples could learn them.
+All five are NC, the class with twice the subjects and more variety. These are
+the "physiologically impossible tissue junctions" of Section 2.4: rare, but
+present, and the reason E2's precision (0.27) is far below real slices' (0.75).
+A downstream model trained on unfiltered samples could learn them.
 
 ## 10. Recommendation for the project manager
 
