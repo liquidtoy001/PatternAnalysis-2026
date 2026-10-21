@@ -75,10 +75,11 @@ be shared, because a simple loss test recognises 13.5% of training slices at a
 8. [Test-split results](#8-test-split-results)
 9. [Failure autopsies](#9-failure-autopsies)
 10. [Recommendation for the project manager](#10-recommendation-for-the-project-manager)
-11. [Reproducing the results](#11-reproducing-the-results)
-12. [Limitations](#12-limitations)
-13. [Artificial Intelligence Usage Disclosure](#13-artificial-intelligence-usage-disclosure)
-14. [References](#14-references)
+11. [Conclusion](#11-conclusion)
+12. [Reproducing the results](#12-reproducing-the-results)
+13. [Limitations](#13-limitations)
+14. [Artificial Intelligence Usage Disclosure](#14-artificial-intelligence-usage-disclosure)
+15. [References](#15-references)
 
 ## 1. The engineering dilemma
 
@@ -193,14 +194,38 @@ classifier-free guidance (Ho & Salimans, 2022):
 `modules.guided_ddim` implements this loop; a unit test checks it against
 diffusers' `StableDiffusionPipeline` to 1e-5.
 
-### 4.2 What is trained
+### 4.2 The architecture, and what is trained
+
+Stable Diffusion 1.5 has three networks (Rombach et al., 2022):
+
+- **Autoencoder** (84 M parameters, frozen). A convolutional KL-regularised VAE
+  whose encoder reduces a 256 × 256 × 3 image by 8 in each direction to a
+  4 × 32 × 32 latent, and whose decoder maps latents back to images. Latents
+  are multiplied by the scaling factor stored in the checkpoint's configuration
+  (0.18215) so they have roughly unit variance; the code reads it from the
+  configuration rather than hard-coding it.
+- **Text encoder** (123 M, frozen). CLIP ViT-L/14 turns each prompt into a
+  77 × 768 sequence of token embeddings: "a brain MRI slice, Alzheimer disease",
+  "a brain MRI slice, normal control", or the empty prompt.
+- **Denoising UNet** (860 M). Four down-sampling stages (320, 640, 1280, 1280
+  channels), a middle block and four mirrored up-sampling stages joined by skip
+  connections. Each down-sampling stage holds two residual blocks and each up-sampling stage three; they receive the noise
+  step *t* through a sinusoidal embedding and an MLP; the first three stages and
+  their mirrors also hold transformer blocks, in which self-attention mixes
+  positions in the latent and cross-attention lets every position attend to
+  the 77 prompt tokens. Cross-attention is how the class reaches the image.
+
+What each model trains:
 
 | Model | Trainable part | Parameters | Weight file |
 | --- | --- | ---: | ---: |
-| E2 | the whole SD1.5 UNet | 859.5 M | 1.7 GB |
-| E3 | rank-4 LoRA on every attention projection (q, k, v, out) | 0.80 M | 1.6 MB |
+| E2 | every UNet weight | 859.5 M | 1.7 GB |
+| E3 | LoRA on every attention projection (q, k, v, out) of the UNet: each frozen weight *W* gets a trainable update *W* + *B A*, with *A* of shape 4 × d_in and *B* of shape d_out × 4 (Hu et al., 2022) | 0.80 M | 1.6 MB |
+| B3 | a smaller UNet of the same design (128, 256, 384, 384 channels), from random initialisation | 92.2 M | 0.18 GB |
 
-The VAE and the text encoder stay frozen in both.
+`modules.py` builds and loads these (`load_unet`, `add_lora`, `build_unet`
+with the B3 configuration `SCRATCH_UNET`); the noise schedule, loss, EMA,
+guided sampler and DDIM inversion are written there too.
 
 ### 4.3 The training recipe, and the failure each part fixes
 
@@ -377,7 +402,26 @@ selection):
 ![Joint t-SNE of frozen VAE features: training and test slices by true class, generated samples by requested class](docs/figures/tsne-test.png)
 
 E2, E3 and B3 fall inside the cloud of real slices; SD, E0, the VAE and the
-GAN form their own clusters away from it.
+GAN form their own clusters away from it. AD and NC are mixed within the
+real cloud: in these features a single slice carries little sign of its class.
+
+**Does the requested class show in the samples?** (post-hoc, not
+pre-registered.) A linear probe, fitted on validation slices only, separates
+real AD from NC test slices with AUC 0.76. Read on each model's samples, split
+by the class asked for, it gives:
+
+| | Real test | E2 | E3 | B3 | E0 | B1 VAE | B2 GAN | SD |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Probe AUC, AD against NC | 0.76 | **0.95** | 0.92 | 0.76 | 0.77 | 0.53 | 0.96 | 0.49 |
+
+![Probe probability of NC for real test slices and for E2, E3 and B3 samples by requested class](docs/figures/class-probe-test.png)
+
+The conditioning works: E2's AD and NC samples differ in the direction real AD
+and NC slices differ. But they differ *more* than real slices do. The samples
+are caricatures of their class, probably because guidance 7.5 extrapolates
+along the class direction (not tested). The VAE barely uses its class input,
+and SD, untrained, not at all; the GAN's separation comes from drawing one
+template per class.
 
 ### 8.4 Interpolation
 
@@ -504,9 +548,40 @@ size, which is why the size is stated next.
 **What the project manager should not conclude.** That the cohort is
 anonymous: membership inference shows the training set is recoverable from the
 model. That it is clinically valid: no radiologist reviewed it. That it helps a
-classifier: not tested.
+classifier: not tested, and its classes are exaggerated (Section 8.3).
 
-## 11. Reproducing the results
+## 11. Conclusion
+
+Fine-tuning Stable Diffusion 1.5 on 21,240 ADNI training slices produced the
+most realistic and most varied synthetic slices of every model tested: SSIM
+0.704 on unseen patients (real slices 0.707), the lowest KID and the highest
+coverage, with no copies of training slices and the requested class clearly
+present. The trilemma of Section 2.4 did not disappear; it moved. No model
+escaped all three corners:
+
+1. **Blur and collapse** ruled out the simple baselines: the VAE's averages
+   and the GAN's single template per class score zero coverage while passing or
+   nearly passing the SSIM target.
+2. **Hallucinated anatomy** remains rare but real in the best model: a
+   disordered posterior fossa, structures running off the frame, over-bright
+   slices, and class differences exaggerated beyond real data.
+3. **Memorisation** grew with fit. Trained from scratch, a diffusion model
+   reproduces training slices (B3); fine-tuned in full, it keeps few traces in
+   its samples but reveals its training set through its loss (E2); the small
+   adapter leaks far less (E3) but covers a quarter as much of the real data.
+
+Three lessons carry beyond this project. The training recipe and data cleaning,
+not capacity, delivered the fidelity (E0 to E3, Section 7). Pretraining on
+natural images bought generalisation rather than fidelity (B3). And no single
+number answers the dilemma: SSIM missed both a collapsed GAN and a replicating
+diffusion model, which only distribution and membership measures exposed.
+
+**Next steps**, in order of expected value: fine-tune with differential privacy
+or stop earlier to cut E2's membership leak; lower the guidance to reduce class
+exaggeration and widen coverage; then a radiologist review and a
+train-on-synthetic, test-on-real classifier study before any use of the cohort.
+
+## 12. Reproducing the results
 
 **Environment.** Rangpur, one NVIDIA A100-PCIE-40GB per job. Python 3.11.15,
 PyTorch 2.13.0+cu130, torchvision 0.28.0+cu130, diffusers 0.40.0, transformers
@@ -550,7 +625,7 @@ settings and reproduces earlier cohorts byte for byte; training enables TF32
 for speed and is reproducible in its records, not bit for bit. Slurm wrappers in
 `tools/` record each job; the ledger lists every job ID.
 
-## 12. Limitations
+## 13. Limitations
 
 - No radiologist review: "plausible" means plausible to a non-expert.
 - Downstream utility (training a classifier on synthetic data) is not measured.
@@ -560,7 +635,7 @@ for speed and is reproducible in its records, not bit for bit. Slurm wrappers in
 - Pixel and feature distances cannot prove the absence of memorisation; the
   membership test bounds one attack, not all.
 
-## 13. Artificial Intelligence Usage Disclosure
+## 14. Artificial Intelligence Usage Disclosure
 
 The dated record of every AI-assisted step, including mistakes, is
 [AI_USAGE.md](AI_USAGE.md). In summary:
@@ -613,7 +688,7 @@ Rangpur.
   one-image sampling.
 - *Student verification:* to be confirmed by the student before submission.
 
-## 14. References
+## 15. References
 
 - Rombach, R., et al. High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022.
 - Song, J., Meng, C., Ermon, S. Denoising Diffusion Implicit Models. ICLR 2021.
