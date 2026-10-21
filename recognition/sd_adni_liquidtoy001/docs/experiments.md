@@ -1297,3 +1297,37 @@ causes are hypotheses, not verified.
 SSIM references, which are middle slices only and would give the sort a
 slice-position cue; it was discarded unseen and the tool now draws random test
 slices (39dff86), to be extracted on Rangpur when the connection returns.
+
+## 2026-10-21 — Post-hoc: does the requested class show in the samples?
+
+**Not pre-registered.** Prompted by previous years' reviews, which expected an
+embedding with clustered classes; the test t-SNE (VAE features) shows real and
+generated slices overlapping but AD and NC mixed. This analysis uses only
+features already extracted in the frozen test run; no data were read again.
+
+A logistic-regression probe (standardised Inception features, C = 0.006 by
+5-fold cross-validation) was fitted on the 1,024 class-balanced validation
+slices and read on the test slices and on each model's samples, split by the
+class requested (`tools/class_probe.py`; `test-class-probe-2026-10-21.json`):
+
+| | Probe AUC, NC against AD (95% CI) | Mean P(NC), asked AD / asked NC |
+| --- | ---: | ---: |
+| Real test slices | 0.758 (0.744-0.771) | |
+| E2 / R1-E2 | 0.948 / 0.950 | 0.17 / 0.81 |
+| E3 / R1-E3 | 0.919 / 0.918 | 0.04 / 0.48 |
+| B3 | 0.757 | 0.29 / 0.59 |
+| E0 | 0.770 | 0.19 / 0.45 |
+| B2 GAN | 0.963 | 0.11 / 0.83 |
+| B1 VAE | 0.525 | 0.36 / 0.38 |
+| SD zero-shot | 0.491 | 0.21 / 0.20 |
+
+**Reading.** The conditioning works and shows: E2's and E3's samples are
+separated by the requested class. They are *more* separable than real slices
+(0.95 against 0.76): the samples exaggerate the class difference, which real
+slices show only weakly per slice. A likely cause, not tested, is guidance 7.5,
+which extrapolates along the class direction. B3 separates as much as real
+slices; the VAE barely uses its class input; SD, without training, not at all.
+The GAN's high value comes from one template per class, so separability alone
+is not quality. Consequence for the verdict: a classifier trained on E2's
+samples would see cleaner class differences than real data contain, one more
+reason downstream use is not established.
