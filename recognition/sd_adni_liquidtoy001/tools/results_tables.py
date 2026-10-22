@@ -14,16 +14,16 @@ from pathlib import Path
 
 ORDER = ("sd", "e0", "e2", "r1e2", "e3", "r1e3", "b3", "b1", "b2", "b2b")
 NAMES = {
-    "sd": "SD zero-shot",
-    "e0": "E0 first LoRA",
-    "e2": "**E2** full UNet",
-    "r1e2": "E2, seed 2",
-    "e3": "**E3** adapter",
-    "r1e3": "E3, seed 2",
-    "b3": "B3 from scratch",
-    "b1": "B1 VAE",
-    "b2": "B2 GAN",
-    "b2b": "B2b per-class GANs",
+    "sd": "SD 1.5, no training (SD)",
+    "e0": "First LoRA, no recipe (E0)",
+    "e2": "**Full fine-tune**, cleaned data (E2)",
+    "r1e2": "Full fine-tune, 2nd seed (R1-E2)",
+    "e3": "**LoRA adapter**, same recipe (E3)",
+    "r1e3": "LoRA adapter, 2nd seed (R1-E3)",
+    "b3": "Diffusion from scratch, 92 M (B3)",
+    "b1": "Conditional VAE (B1)",
+    "b2": "Conditional GAN (B2)",
+    "b2b": "One GAN per class (B2b)",
 }
 
 
