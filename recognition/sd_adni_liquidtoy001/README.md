@@ -33,16 +33,18 @@ for this project in PyTorch; the pretrained weights and building blocks come fro
 `diffusers`, `transformers` and `peft`.
 
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Training
-        X[ADNI slice 256x256] --> E[Frozen VAE encoder] --> Z0[latent z0 4x32x32]
-        Z0 --> N[add noise at step t] --> U[UNet: fine-tuned or LoRA]
-        P["prompt: AD / NC, 10% empty"] --> T[Frozen CLIP text encoder] --> U
-        U --> L["loss = MSE(predicted noise, true noise)"]
+        direction LR
+        X[ADNI slice] --> E[VAE encoder] --> N["latent + noise, step t"] --> U[UNet]
+        P["AD / NC prompt"] --> T[CLIP text encoder] --> U
+        U --> L[noise MSE loss]
     end
     subgraph Generation
-        R[seeded noise] --> D[30 DDIM steps with classifier-free guidance 7.5] --> V[Frozen VAE decoder] --> S[synthetic slice]
+        direction LR
+        R[seeded noise] --> D["30 DDIM steps, guidance 7.5"] --> V[VAE decoder] --> S[synthetic slice]
     end
+    Training -- "trained UNet" --> Generation
 ```
 
 **Results at a glance** (test split, 1,024 samples per model; real slices
