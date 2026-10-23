@@ -24,8 +24,9 @@ come from `diffusers`, `transformers` and `peft`.
 <p align="center"><img src="docs/figures/ldm-rombach2022.png" alt="Latent diffusion model architecture (Rombach et al., 2022, Figure 3)" width="560"></p>
 
 *Latent diffusion, the architecture of Stable Diffusion (Rombach et al., 2022,
-Fig. 3; image from the authors'
-[CompVis/latent-diffusion](https://github.com/CompVis/latent-diffusion)
+Fig. 3; rendered from the vector original in the paper's
+[arXiv source](https://arxiv.org/abs/2112.10752); the same figure ships in the
+authors' [CompVis/latent-diffusion](https://github.com/CompVis/latent-diffusion)
 repository, MIT licence). Here ℰ and 𝒟 are SD1.5's frozen VAE, the
 conditioning is a class prompt only ("a brain MRI slice, Alzheimer disease"
 or "a brain MRI slice, normal control"), and τ_θ is the frozen CLIP text encoder. What each
