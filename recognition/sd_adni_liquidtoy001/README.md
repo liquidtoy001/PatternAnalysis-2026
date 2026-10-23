@@ -21,7 +21,15 @@ decodes the result. The training loop, sampler, data pipeline and all
 evaluation are this project's own PyTorch code; pretrained weights and layers
 come from `diffusers`, `transformers` and `peft`.
 
-![Stable Diffusion 1.5 as used here: the frozen VAE and text encoder, the denoising UNet, and what each adaptation trains](docs/figures/architecture.png)
+<p align="center"><img src="docs/figures/ldm-rombach2022.png" alt="Latent diffusion model architecture (Rombach et al., 2022, Figure 3)" width="560"></p>
+
+*Latent diffusion, the architecture of Stable Diffusion (Rombach et al., 2022,
+Fig. 3; image from the authors'
+[CompVis/latent-diffusion](https://github.com/CompVis/latent-diffusion)
+repository, MIT licence). Here ℰ and 𝒟 are SD1.5's frozen VAE, the
+conditioning is a class prompt only ("a brain MRI slice, Alzheimer disease"
+or "a brain MRI slice, normal control"), and τ_θ is the frozen CLIP text encoder. What each
+model trains is shown in Section 4.*
 
 **Results** on the test split (1,024 samples per model; real slices score SSIM
 0.707, KID 0.06, coverage 0.81):
@@ -152,7 +160,7 @@ classifier-free guidance (Ho & Salimans, 2022), ε̂ = ε_θ(*z*ₜ, *t*, ∅) +
 (ε_θ(*z*ₜ, *t*, *c*) − ε_θ(*z*ₜ, *t*, ∅)), *w* = 7.5. A unit test matches
 `modules.guided_ddim` to diffusers' official pipeline.
 
-**Architecture** (figure above). The VAE (84 M, frozen) compresses by 8 in each
+**Architecture** (figure in the Summary, and below). The VAE (84 M, frozen) compresses by 8 in each
 direction. CLIP ViT-L/14 (123 M, frozen) turns each prompt into 77 × 768 token
 embeddings. The UNet (860 M) has four down stages (320, 640, 1280, 1280
 channels), a middle block and four up stages joined by skips; residual blocks
@@ -160,6 +168,8 @@ take the step *t*, and transformer blocks in all but the deepest stage use
 cross-attention to read the prompt. E2 trains every UNet weight; E3 trains only
 rank-4 LoRA updates *W* + *BA* on the attention projections (Hu et al., 2022);
 B3 is a 92 M UNet of the same design from random initialisation.
+
+![What each adaptation trains: E2 every UNet weight, E3 rank-4 LoRA on the attention projections; the VAE and text encoder stay frozen](docs/figures/architecture.png)
 
 **Recipe**, and the failure each part fixes:
 
