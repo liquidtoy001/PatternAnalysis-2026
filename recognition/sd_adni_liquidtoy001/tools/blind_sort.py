@@ -7,6 +7,15 @@ samples do; saved privately without identifiers.
 
     python tools/blind_sort.py extract --output outputs/blind-real.npz
 
+reference: before sorting, a page of real slices from the training split only
+(none can appear in the sort) with their class, so a non-expert knows what
+real slices look like. No synthetic examples are shown.
+
+    python tools/blind_sort.py extract --split train --per-class 8 \
+        --output outputs/reference-real.npz
+    python tools/blind_sort.py reference --real outputs/reference-real.npz \
+        --output outputs/blind-sort/private-reference.html
+
 build: those 32 slices plus 16 AD and 16 NC samples of the recommended model,
 all shown in grayscale at 256 px without names, shuffled with seed 3710, in a
 private HTML page; the key goes to a separate private file.
@@ -82,7 +91,7 @@ document.getElementById('save').onclick = () => {{
 
 
 def extract(args):
-    """Random test slices for the sort; run where the data is (Rangpur)."""
+    """Random slices of one split (test for the sort); run where the data is."""
     import sys
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -90,15 +99,47 @@ def extract(args):
     from dataset import ADNISliceDataset
     from final_common import ADNI_ROOT, MANIFEST, balanced_sample
 
-    data = ADNISliceDataset(ADNI_ROOT, MANIFEST, "test", 256, verify_hash=True)
-    chosen = balanced_sample([r["class_name"] for r in data.rows], PER_CLASS, SEED)
+    data = ADNISliceDataset(ADNI_ROOT, MANIFEST, args.split, 256, verify_hash=True)
+    chosen = balanced_sample([r["class_name"] for r in data.rows], args.per_class, SEED)
     images = [
         ((data[i]["pixel_values"][0] + 1) * 127.5).round().byte().numpy()
         for i in chosen
     ]
     is_nc = [data.rows[i]["class_name"] == "NC" for i in chosen]
     np.savez(args.output, images=np.stack(images), is_nc=np.array(is_nc, dtype=np.int8))
-    print(f"saved {len(images)} test slices to", args.output)
+    print(f"saved {len(images)} {args.split} slices to", args.output)
+
+
+def reference(args):
+    """A labelled page of real training slices to look at before the sort."""
+    real = np.load(args.real)
+    sections = []
+    for label, flag in (("AD", 0), ("NC", 1)):
+        cells = "\n".join(
+            f'<figure><img src="data:image/png;base64,{png_data(Image.fromarray(image))}"'
+            f' alt="real {label} slice"><figcaption>real, {label}</figcaption></figure>'
+            for image, is_nc in zip(real["images"], real["is_nc"])
+            if is_nc == flag
+        )
+        sections.append(f"<h2>{label}</h2><main>{cells}</main>")
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        f"""<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Real reference slices</title><style>
+body{{font-family:system-ui,sans-serif;margin:16px;background:#fff;color:#111}}
+main{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}}
+figure{{margin:0;border:1px solid #ccc;padding:6px}} img{{width:100%}}
+figcaption{{font-size:14px}}
+</style></head><body>
+<h1>Real slices for reference</h1>
+<p>{len(real["images"])} real slices drawn at random from the training split. None of
+them appear in the sort. Look at them, close this page, then open the sort.</p>
+{"".join(sections)}
+</body></html>
+"""
+    )
+    print(f"wrote {len(real['images'])} reference slices to", args.output)
 
 
 def build(args):
@@ -176,6 +217,11 @@ def main():
     commands = parser.add_subparsers(dest="command", required=True)
     e = commands.add_parser("extract")
     e.add_argument("--output", type=Path, required=True)
+    e.add_argument("--split", choices=("train", "test"), default="test")
+    e.add_argument("--per-class", type=int, default=PER_CLASS)
+    r = commands.add_parser("reference")
+    r.add_argument("--real", type=Path, required=True)
+    r.add_argument("--output", type=Path, required=True)
     b = commands.add_parser("build")
     b.add_argument("--real", type=Path, required=True)
     b.add_argument("--cohort", type=Path, required=True)
@@ -185,7 +231,8 @@ def main():
     s.add_argument("--answers", type=Path, required=True)
     s.add_argument("--output", type=Path)
     args = parser.parse_args()
-    {"extract": extract, "build": build, "score": score}[args.command](args)
+    handlers = {"extract": extract, "reference": reference, "build": build, "score": score}
+    handlers[args.command](args)
 
 
 if __name__ == "__main__":

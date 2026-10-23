@@ -264,6 +264,28 @@ class BlindSortTest(unittest.TestCase):
             )
             self.assertEqual(json.loads(output.read_text())["accuracy"], 1.0)
 
+    def test_reference_page_shows_every_real_slice_by_class(self):
+        import argparse
+
+        import blind_sort
+
+        with tempfile.TemporaryDirectory() as folder:
+            folder = Path(folder)
+            np.savez(
+                folder / "reference.npz",
+                images=np.zeros((16, 64, 64), dtype=np.uint8),
+                is_nc=np.array([0] * 8 + [1] * 8, dtype=np.int8),
+            )
+            output = folder / "page" / "private-reference.html"
+            blind_sort.reference(
+                argparse.Namespace(real=folder / "reference.npz", output=output)
+            )
+            html = output.read_text()
+            self.assertEqual(html.count("data:image/png;base64"), 16)
+            self.assertEqual(html.count("real, AD"), 8)
+            self.assertEqual(html.count("real, NC"), 8)
+            self.assertNotIn("synthetic", html)
+
 
 @unittest.skipUnless(HAS_DIFFUSERS, "needs diffusers and peft (training environment)")
 class ModelSideTest(unittest.TestCase):
