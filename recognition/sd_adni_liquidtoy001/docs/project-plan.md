@@ -54,32 +54,31 @@ Historical user records report an A100 PCIe 40GB, a 12-hour course partition, an
 
 The [2 October audit](rangpur-audit-2026-10-02.md) found 30,520 grayscale JPEG slices from 1,526 scans and 680 patients, with metadata available for patient grouping. The supplied train/test directories share 216 patients and must not be described as patient-independent. Home has approximately 2.20 GiB free; a durable storage budget is still unresolved. No baseline smoke test or model training has occurred. Add the final split design and resource budget before presenting the one-page feasibility review.
 
-## 2026-10-07 要求覆盖与下一步（当前状态）
+## 2026-10-07 coverage of the requirements and next steps (status on that date)
 
-| 要求 | 现有证据 | 状态 / 缺口 |
+| Requirement | Evidence at the time | Status / gap |
 | --- | --- | --- |
-| 患者隔离与数据协议 | 476/102/102患者，全量哈希与加载验收 | 已验收；测试集未用于评价 |
-| SD与独立简单基线 | LoRA20k步，条件VAE5轮 | 已运行；LoRA/预训练库范围需教师确认 |
-| 训练稳定与资源 | 8步恢复严格一致、20k记录、显存/耗时 | 已有证据；非完整20k连续对照 |
-| SSIM与分布指标 | 两种配对SSIM、像素/VAE特征双向近邻 | 已计算；SD均值低于0.6，不能标为达标 |
-| t-SNE/UMAP | 396点联合t-SNE，元数据/提示标签区分 | 已生成；共享编码器偏差，不代表临床标签正确 |
-| 随机种子完整网格 | 三模型各64图，CFG192图 | 已检查；保留全部输出 |
-| 3–5失败案例 | 灰背景、颜色伪影、基线模糊 | 3类观察；SD自身独立失败案例与根因仍需学生细化，风险探针不冒充失败 |
-| 最近邻与插值 | 像素/特征近邻、噪声路径、真实/生成VAE码路径 | 有证据；不能据此证明无记忆或安全 |
-| 一页可行性与check-off | E:/Documents/COMP3710/finalreport/checkoff/feasibility-review-2026-10-07.pdf | 一页英文讨论稿已制作；学生审阅及教师记录未完成 |
-| 最终代码入口 | dataset.py和诊断脚本 | modules.py/train.py/predict.py未统一，复现环境清单仍需整理 |
-| README与PDF、最终PR | 本地渐进提交与备份、AI_USAGE | 正式README报告/PDF/PR未完成，禁止当作已提交 |
-| 最终测试评价 | test封存 | 固定协议后再执行，不为调参提前打开 |
+| Patient isolation and data protocol | 476/102/102 patients, full hashing and load checks | accepted; test split not used for evaluation |
+| SD and an independent simple baseline | LoRA 20k steps, conditional VAE 5 epochs | run; scope of LoRA and pretrained libraries to be confirmed with the tutor |
+| Training stability and resources | strict 8-step resume equality, 20k-step records, memory and time | evidence exists; not a full uninterrupted 20k comparison |
+| SSIM and distribution measures | two paired SSIM variants, pixel and VAE-feature nearest neighbours in both directions | computed; SD mean below 0.6, must not be reported as meeting the target |
+| t-SNE/UMAP | 396-point joint t-SNE, coloured by metadata and prompt label | generated; shared-encoder bias, does not show clinical labels are correct |
+| Complete fixed-seed grids | 64 images for each of three models, 192 for the CFG sweep | inspected; all outputs kept |
+| 3-5 failure cases | grey background, colour artefacts, blurry baseline | 3 kinds observed; SD's own failure cases and root causes still to be refined by the student; risk probes not to be passed off as failures |
+| Nearest neighbours and interpolation | pixel and feature neighbours, noise paths, real/generated VAE-code paths | evidence exists; cannot prove absence of memorisation or safety |
+| One-page feasibility review and check-off | feasibility-review-2026-10-07.pdf (local, not in the repository) | one-page English draft made; student review and tutor record not done |
+| Final code entry points | dataset.py and diagnostic scripts | modules.py/train.py/predict.py not unified; reproduction environment list still to be written |
+| README, PDF, final PR | local incremental commits and backups, AI_USAGE | formal README report, PDF and PR not done; must not be described as submitted |
+| Final test evaluation | test split sealed | to run only after a fixed protocol, never opened early for tuning |
 
-优先顺序：先学生审阅一页材料并完成咨询；并行整理已有代码的最终入口与复现说明。
-不应继续无限扩展采样搜索。后续训练应有单一假设、对照预算和明确停止条件。
+Priority: the student reviews the one-page material and completes the consultation first; in parallel, consolidate the existing code into final entry points with reproduction notes. Sampling searches should not keep expanding. Any further training needs a single hypothesis, a matched budget and an explicit stopping condition.
 
-### 咨询时需要你能够解释
+### Points the student should be able to explain at the consultation
 
-1. 为什么216位患者跨原始目录会导致泄漏，患者划分如何解决它？
-2. SD在预测什么、LoRA更新哪些参数，为什么冻结其余组件？
-3. 为什么VAE更模糊却SSIM更高？为什么不能挑最高SSIM配对？
-4. t-SNE图和最近邻审计各不能证明什么？
-5. 明确区分观察（灰背景）与原因假设（先验/采样/训练不足）。
+1. Why do the 216 patients shared across the original folders cause leakage, and how does the patient-level split fix it?
+2. What does SD predict, which parameters does LoRA update, and why are the other components frozen?
+3. Why does the VAE score a higher SSIM despite being blurrier? Why must the highest-SSIM pairing not be picked?
+4. What can the t-SNE plot and the nearest-neighbour audit each not prove?
+5. Keep observations (grey background) separate from hypothesised causes (prior, sampling, undertraining).
 
-咨询记录仍为空；不得填入未发生的教师批准或完成日期。
+The consultation record is still empty; no tutor approval or completion date may be filled in before it happens. (Translated from the original Chinese note on 23 October 2026; the check-off took place on 15 October, see the README's feasibility review.)

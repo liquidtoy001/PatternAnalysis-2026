@@ -15,7 +15,7 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("E:/Documents/COMP3710/finalreport/checkoff"),
+        default=Path("outputs/checkoff"),
     )
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
