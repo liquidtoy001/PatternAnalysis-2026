@@ -1,10 +1,14 @@
 """CPU tests of train.fit: records, early stopping and reloadable weights."""
 
 import csv
+import importlib.util
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+if importlib.util.find_spec("diffusers") is None:
+    raise unittest.SkipTest("needs diffusers and peft (training environment)")
 
 import torch
 

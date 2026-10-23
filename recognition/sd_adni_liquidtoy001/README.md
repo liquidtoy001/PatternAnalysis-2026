@@ -465,6 +465,13 @@ output is one PNG per sample, grids, and a report with every file's SHA-256:
 python predict.py --weights outputs/e2/weights/unet-ema-epoch-10.safetensors --output outputs/e2-cohort --count 32
 ```
 
+For one class only, add `--classes AD` or `--classes NC`; a seed gives the same
+image either way:
+
+```bash
+python predict.py --weights outputs/e2/weights/unet-ema-epoch-10.safetensors --output outputs/e2-ad --classes AD --count 100
+```
+
 Run the CPU tests:
 
 ```bash

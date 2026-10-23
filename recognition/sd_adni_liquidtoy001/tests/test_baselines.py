@@ -2,11 +2,15 @@
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+if importlib.util.find_spec("diffusers") is None:
+    raise unittest.SkipTest("needs diffusers and peft (training environment)")
 
 import torch
 

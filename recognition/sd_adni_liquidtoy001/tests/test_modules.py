@@ -5,11 +5,15 @@ image quality. The tiny UNet keeps SD1.5's block types and
 cross-attention but is a few hundred thousand parameters.
 """
 
+import importlib.util
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+
+if importlib.util.find_spec("diffusers") is None:
+    raise unittest.SkipTest("needs diffusers and peft (training environment)")
 
 import torch
 from diffusers import (

@@ -3,12 +3,14 @@
     python predict.py --weights outputs/e1-<job>/weights/unet-ema-epoch-10.safetensors \
                       --output outputs/e1-cohort-<job>
     python predict.py --output outputs/base-cohort     # the untouched SD1.5 model
+    python predict.py --weights ... --output outputs/ad-only --classes AD --count 100
 
 Follows the protocol of the earlier cohorts: seeds 37200-37231 for each of AD
 and NC, DDIM with 30 steps and eta 0, guidance 7.5, 256x256 pixels, and the
-same deterministic GPU settings. Writes one PNG per image, a labelled RGB grid,
-a grayscale grid, and report.json with the SHA-256 of every file, in the layout
-tools/audit_*.py read. Prints two appearance statistics per image: channel
+same deterministic GPU settings. --classes AD (or NC) generates one class
+only; a seed gives the same image whichever classes are requested. Writes one
+PNG per image, a labelled RGB grid, a grayscale grid, and report.json with the
+SHA-256 of every file, in the layout tools/audit_*.py read. Prints two appearance statistics per image: channel
 spread (MRI is single-channel, so any spread is an artefact) and outer-border
 brightness (MRI background is black, so a bright border means a grey background).
 """
@@ -90,6 +92,13 @@ def main() -> None:
     )
     parser.add_argument("--first-seed", type=int, default=37200)
     parser.add_argument("--count", type=int, default=32, help="seeds per class")
+    parser.add_argument(
+        "--classes",
+        nargs="+",
+        choices=LABELS,
+        default=list(LABELS),
+        help="which classes to generate (default: both)",
+    )
     parser.add_argument("--guidance", type=float, nargs="+", default=[7.5])
     parser.add_argument("--steps", type=int, default=30)
     parser.add_argument(
@@ -102,6 +111,7 @@ def main() -> None:
     parser.add_argument("--vae-dir", type=Path, default=Path("models/sd15-vae"))
     parser.add_argument("--device", default="cuda")
     args = parser.parse_args()
+    args.classes = [label for label in LABELS if label in args.classes]  # fixed order, no repeats
     device = torch.device(args.device)
     if device.type == "cuda":
         # The settings used for the E0 cohorts, so generation numerics match.
@@ -129,7 +139,7 @@ def main() -> None:
     ]
     for guidance in args.guidance:
         tiles = []
-        for label in LABELS:
+        for label in args.classes:
             for batch in batches:
                 starts = [initial_noise(seed, 256, device) for seed in batch]
                 latents = guided_ddim(
@@ -167,7 +177,7 @@ def main() -> None:
     print(f"{'label':<6}{'cfg':>6}{'n':>4}{'channel spread':>17}{'border mean':>14}")
     summary = {}
     for guidance in args.guidance:
-        for label in LABELS:
+        for label in args.classes:
             group = [
                 r for r in records if r["label"] == label and r["guidance"] == guidance
             ]
@@ -187,6 +197,7 @@ def main() -> None:
         "mode": mode,
         "unet_init": args.unet_init,
         "prompts": PROMPTS,
+        "classes": args.classes,
         "scheduler": "DDIM",
         "inference_steps": args.steps,
         "batch_size": args.batch_size,
