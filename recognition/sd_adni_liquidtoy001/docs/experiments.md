@@ -1331,3 +1331,17 @@ The GAN's high value comes from one template per class, so separability alone
 is not quality. Consequence for the verdict: a classifier trained on E2's
 samples would see cleaner class differences than real data contain, one more
 reason downstream use is not established.
+
+## 2026-10-24 — Deviation: real reference slices shown before the blinded sort
+
+The protocol's blinded sort assumed a non-expert with no preparation. The
+student, who has no medical training, asked to see real slices first. Before
+sorting, the student is shown 16 real slices (8 AD, 8 NC) drawn at random from
+the **training** split (`blind_sort.py extract --split train --per-class 8`,
+seed 3710, on the Rangpur login node; `blind_sort.py reference` builds the
+page). The sort's real slices come from the test split, so none of these can
+appear in it, and no synthetic example or description of synthetic artefacts
+is shown. The page stays private (real slices). The student had already read
+the README, with its uncurated synthetic grids and autopsy figures, so the sort
+measures a non-expert who has seen both real and synthetic examples, not a
+naive viewer.
