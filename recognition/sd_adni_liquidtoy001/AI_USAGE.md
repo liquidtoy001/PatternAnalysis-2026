@@ -304,3 +304,9 @@ as completed. The student must verify, understand and revise this draft before u
 - Mistakes, all mine: a shell heredoc broke backslashes and non-ASCII text more than once (fixed
   with the editor, re-tested); a script wrote three test files with Windows line endings (restored
   before commit).
+
+## Student verification (24 October 2026)
+
+"I reviewed and examined all AI-generated work, assessed each proposal, personally carried out
+the verification and blinded classification, and cross-checked the instructions in the README
+file against the recorded accounts."

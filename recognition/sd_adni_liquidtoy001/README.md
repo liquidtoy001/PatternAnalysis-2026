@@ -528,8 +528,12 @@ file copied to Rangpur, weight file and generated image was hash-checked, and
 every Slurm job dry-run first. The evaluation code had to reproduce all earlier
 validation SSIM values to six decimals before the test split was read. Every
 grid and closest-pair panel was inspected before its numbers were interpreted.
-Mistakes found and fixed are listed in AI_USAGE.md. *Student verification:* to
-be confirmed by the student before submission.
+Mistakes found and fixed are listed in AI_USAGE.md.
+
+*Student verification:* "I reviewed and examined all AI-generated work,
+assessed each proposal, personally carried out the verification and blinded
+classification, and cross-checked the instructions in the README file against
+the recorded accounts."
 
 ## 14. References
 
