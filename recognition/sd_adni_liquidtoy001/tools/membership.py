@@ -11,7 +11,8 @@ with the true-class prompt on the VAE posterior mean:
 - secondary: one draw at each t from 50 to 950 in steps of 50.
 
 Noise depends only on the set, the image's position and the draw, so every
-model sees the same draws. SD (no weights) is the control.
+model sees the same draws. SD (no weights) is the control. The loss-threshold
+attack follows Carlini et al. (USENIX Security 2023) and Duan et al. (ICML 2023).
 
     python tools/membership.py --model e2 --weights PATH --mode rehearsal \
         --exclude-scans ../runs/e2-20261013/outputs/e2-656467/private-excluded-scans.json \

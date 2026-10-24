@@ -128,7 +128,8 @@ def load_noise_schedule(model_dir: Path) -> DDPMScheduler:
 
 
 def add_lora(unet: UNet2DConditionModel, rank: int) -> None:
-    """Attach the E0 adapter: rank-r LoRA on every attention projection."""
+    """Attach the E0 adapter: rank-r LoRA (Hu et al., ICLR 2022) on every
+    attention projection, through the peft library."""
     from peft import LoraConfig
 
     unet.add_adapter(
@@ -420,7 +421,8 @@ def ddim_invert(
 
 def slerp(a: torch.Tensor, b: torch.Tensor, weight: float) -> torch.Tensor:
     """Spherical interpolation between two noise tensors, which keeps the norm
-    a Gaussian sample is expected to have; linear mixing would shrink it."""
+    a Gaussian sample is expected to have; linear mixing would shrink it
+    (Shoemake, "Animating Rotation with Quaternion Curves", SIGGRAPH 1985)."""
     flat_a, flat_b = a.flatten(), b.flatten()
     cosine = torch.dot(flat_a, flat_b) / (flat_a.norm() * flat_b.norm())
     angle = torch.arccos(cosine.clamp(-1, 1))

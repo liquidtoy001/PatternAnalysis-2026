@@ -1,4 +1,4 @@
-"""Small conditional convolutional VAE, trained from scratch at128 pixels.
+"""Small conditional convolutional VAE, trained from scratch at 128 pixels.
 
 Analytic Gaussian KL follows the standard VAE objective, as illustrated by
 https://github.com/pytorch/examples/blob/main/vae/main.py .

@@ -114,17 +114,24 @@ establish clinical utility or anonymity.
 | 4 | Uncurated grids, feature distances, t-SNE, nearest-neighbour audits, 3-5 failure cases | met (Sections 6-8) |
 | 5 | Acceptance criteria committed before every training run | met: one protocol per run in [docs](docs) |
 
-**Model and evidence.** ADNI has 30,520 slices from 680 subjects; the course
-folders share 216 subjects, so the data are re-split by subject. SD1.5 at 256
-px with a frozen VAE and text encoder and an own training loop (Hard tier). At
-check-off, full fine-tuning (E1, E2) trained in 45 minutes and reached
-validation SSIM 0.705 against 0.087 for SD and 0.377 for the first LoRA run.
+**Model and course concepts.** ADNI has 30,520 slices from 680 subjects; the
+course folders share 216 subjects, so the data are re-split by subject. Stable
+Diffusion 1.5 latent diffusion (Rombach et al., 2022; Hard tier) at 256 px,
+with a frozen VAE and text encoder and an own training loop. Course concepts:
+latent compression by an autoencoder, forward noising and learned denoising,
+classifier-free guidance, and fine-tuning capacity (full UNet against LoRA).
 
-**Risks and fallback.** SSIM and pixel distances favour smooth images and
-cannot prove the absence of memorisation; fallback was to report validation
-results. After check-off, following the tutor's feedback, the project added the
-GAN and from-scratch baselines, the E3 ablation, seed replicates and a
-membership test.
+**Evidence at check-off.** Full fine-tuning (E1, E2) trained 10 epochs in 45
+minutes on one A100 (93 images/s, 23.8 GiB peak) and reached validation SSIM
+0.705, against 0.087 for SD and 0.377 for the first LoRA run.
+
+**Risks, budget, next step and fallback.** SSIM and pixel distances favour
+smooth images and cannot prove the absence of memorisation. Budget: E1 and E2
+had used about 1.9 A100-hours with probes and evaluation; the next experiment,
+E3 (E0's adapter with E2's recipe, to separate recipe from capacity), was
+budgeted at 1.2 A100-hours. Fallback: report the validation results. After
+check-off, following the tutor's feedback, the project also added the GAN and
+from-scratch baselines, seed replicates and a membership test.
 
 ## 3. Data, split and pre-processing
 
@@ -186,9 +193,10 @@ B3 is a 92 M UNet of the same design from random initialisation.
 
 **Code.** `dataset.py` (validated loader, hash checks, defective-scan rule),
 `modules.py` (model loading, LoRA, loss, EMA, guided DDIM, DDIM inversion),
-`train.py` (training loop, validation loss, curves), `predict.py` (fixed-seed
-generation), `tools/` (baselines, Slurm jobs, evaluation), `tests/` (CPU tests
-with tiny models).
+`train.py` (training loop, validation loss, curves, checkpoints), `predict.py`
+(fixed-seed generation), `tools/` (baselines, Slurm jobs, and the evaluation
+on the test split, kept apart from `train.py` so the test split stays sealed
+until the code is frozen), `tests/` (CPU tests with tiny models).
 
 ## 5. How the models are judged
 
@@ -466,8 +474,10 @@ python train.py --output outputs/e2 --exclude-defective-scans --expect-excluded 
 python train.py --output outputs/e3 --exclude-defective-scans --expect-excluded 2 40 --trainable lora --lora-rank 4 --lr 1e-4
 ```
 
-Generate seeds 37200 onwards for each class (DDIM 30, guidance 7.5); the
-output is one PNG per sample, grids, and a report with every file's SHA-256:
+Generate seeds 37200 onwards for each class (DDIM 30, guidance 7.5). The input
+is a class (AD or NC) and a seed; the output is one 256 × 256 PNG per sample,
+grids like those in Section 7.3, and a report with every file's SHA-256 and two
+appearance statistics printed per class:
 
 ```bash
 python predict.py --weights outputs/e2/weights/unet-ema-epoch-10.safetensors --output outputs/e2-cohort --count 32
@@ -538,6 +548,7 @@ the recorded accounts."
 ## 14. References
 
 - Rombach, R., et al. High-Resolution Image Synthesis with Latent Diffusion Models. CVPR 2022.
+- Ho, J., Jain, A., Abbeel, P. Denoising Diffusion Probabilistic Models. NeurIPS 2020.
 - Song, J., Meng, C., Ermon, S. Denoising Diffusion Implicit Models. ICLR 2021.
 - Ho, J., Salimans, T. Classifier-Free Diffusion Guidance. NeurIPS Workshop 2021.
 - Hu, E., et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022.
@@ -553,3 +564,4 @@ the recorded accounts."
 - Mescheder, L., et al. Which Training Methods for GANs do actually Converge? (R1 penalty). ICML 2018.
 - Kingma, D. P., Welling, M. Auto-Encoding Variational Bayes. ICLR 2014.
 - Wang, Z., et al. Image Quality Assessment: From Error Visibility to Structural Similarity. IEEE TIP 2004.
+- Shoemake, K. Animating Rotation with Quaternion Curves (slerp). SIGGRAPH 1985.
