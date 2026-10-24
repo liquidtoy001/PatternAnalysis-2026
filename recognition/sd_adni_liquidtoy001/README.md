@@ -318,6 +318,13 @@ E2, E3 and B3 fall inside the cloud of real slices; SD, E0, the VAE and the GAN
 form clusters of their own. Within the real cloud AD and NC mix: one slice
 carries little sign of its class.
 
+**Can a non-expert tell them apart?** In a blinded sort of 32 real test slices
+and 32 E2 samples, the student (no medical training; shown 16 real training
+slices first) was right on 42 of 64, 66% (95% CI 53-77%; chance 50%, p = 0.017).
+12 of the 32 samples were taken for real, and 10 of the 32 real slices for
+synthetic ([result](docs/test-blind-sort-2026-10-24.json)). The samples pass
+as real often, but not as often as real slices do.
+
 **Does the requested class show?** (post-hoc, not pre-registered.) A linear
 probe fitted on validation slices separates real AD from NC test slices with
 AUC 0.76. On samples split by the class asked for:
@@ -414,7 +421,7 @@ below.
 | Samples free of memorisation | **largely** | no copies; at most 1.4% closer to training than held-out slices |
 | Model free of memorisation | **fails** | membership AUC 0.736 (control 0.499); 13.5% of training slices caught at 1% false alarms |
 | Coverage | **best of all models, far from real** | KID 1.27 (floor 0.06), coverage 0.27 (floor 0.81) |
-| Plausibility | **plausible to a non-expert, rare impossible anatomy** | grids, t-SNE, autopsy; blinded sort pending |
+| Plausibility | **partly: a non-expert tells them apart two times in three; rare impossible anatomy** | blinded sort 42/64 correct (chance 50%, 95% CI 53-77%), 12 of 32 samples taken for real; grids, autopsy |
 | Downstream use | **not established** | no train-on-synthetic, test-on-real study |
 
 **Trade-offs.** If only images leave the hospital, use E2 and screen out the
@@ -429,7 +436,8 @@ classifier, and its classes are exaggerated.
 Fine-tuned Stable Diffusion produced the most realistic and varied slices of
 every model tested, with no copies and visible class conditioning. But no model
 escaped all three corners of the trilemma: the VAE and GAN blur or collapse;
-the best model still draws occasional impossible anatomy; and memorisation
+the best model still draws occasional impossible anatomy, and a non-expert
+told its samples from real slices two times in three; and memorisation
 grew with fit, from E3's small leak to E2's model-level leak to B3's copies.
 
 Three lessons: the recipe and data cleaning, not capacity, delivered fidelity;
@@ -485,7 +493,8 @@ the README figures are redrawn by `tools/figure_report.py` from data in `docs/`.
 
 ## 12. Limitations
 
-- No radiologist review; "plausible" means plausible to a non-expert.
+- No radiologist review. The blinded sort had one non-expert rater, who had
+  seen real and synthetic examples beforehand; 64 items give a wide interval.
 - Downstream utility is not measured.
 - 2D slices, one dataset; two seeds for E2 and E3, one per baseline.
 - KID and FID use ImageNet features, a convention rather than a validated MRI

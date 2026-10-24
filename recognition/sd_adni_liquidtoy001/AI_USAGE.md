@@ -287,3 +287,20 @@ as completed. The student must verify, understand and revise this draft before u
     discarded, and rebuilt to draw random test slices (39dff86).
   - A background command defined its variables in the wrong subshell, so the first local SSIM run
     did not start; rerun unchanged. No result was affected.
+
+## 2026-10-21 to 24 — Class probe, report figures, README revision, blinded sort (Claude Code)
+
+- Ran the post-hoc class probe; drew the report figures (`tools/figure_report.py`) from committed
+  records only; shortened the README from about 7,700 to 5,300 words at the student's request,
+  with the latent diffusion figure of Rombach et al. (rendered from the paper's arXiv source,
+  credited in the caption); added `predict.py --classes`; made the training-only tests skip
+  cleanly in the analysis environment; checked the full unpushed history for patient identifiers,
+  data files, local paths and secrets (none found) and made a git bundle backup.
+- Blinded sort: at the student's request, built a private page of 16 real training-split slices to
+  view first (recorded as a deviation in the ledger), then scored the student's answers with
+  `tools/blind_sort.py score`. The student did the sort alone; I did not see the page or the
+  answers before scoring. The result (42/64) weakened the README's plausibility verdict, which
+  was revised to match.
+- Mistakes, all mine: a shell heredoc broke backslashes and non-ASCII text more than once (fixed
+  with the editor, re-tested); a script wrote three test files with Windows line endings (restored
+  before commit).

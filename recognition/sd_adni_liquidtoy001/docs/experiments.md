@@ -1345,3 +1345,25 @@ is shown. The page stays private (real slices). The student had already read
 the README, with its uncurated synthetic grids and autopsy figures, so the sort
 measures a non-expert who has seen both real and synthetic examples, not a
 naive viewer.
+
+## 2026-10-24 — Blinded sort result
+
+Scored with `blind_sort.py score` against the private key; aggregate in
+[test-blind-sort-2026-10-24.json](test-blind-sort-2026-10-24.json).
+
+| | Called real | Called synthetic |
+| --- | ---: | ---: |
+| 32 real test slices | 22 | 10 |
+| 32 E2 samples | 12 | 20 |
+
+Accuracy 42/64 = 66% (Clopper-Pearson 95% CI 53-77%), above chance (two-sided
+binomial p = 0.017). By class, 10/16 real AD, 12/16 real NC, 10/16 synthetic AD
+and 10/16 synthetic NC were sorted correctly: no class is much easier.
+
+**Reading.** The protocol's reading was that accuracy near 50% would mean a
+non-expert cannot tell the two apart. The interval excludes 50%, so this
+non-expert, prepared with real reference slices and having read the README, can
+tell them apart better than chance, though with many errors: 12 of 32 samples
+passed as real. The README's plausibility verdict changes from "plausible to a
+non-expert" to "partly". One rater and 64 items make this a weak test either
+way; it is not clinical validation.
