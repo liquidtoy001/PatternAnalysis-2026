@@ -1,7 +1,7 @@
 # Synthetic brain MRI with Stable Diffusion: fidelity, coverage and memorisation on ADNI
 
-COMP3710 final report · Section 2.4, image generation (Hard) · liquidtoy001 ·
-`recognition/sd_adni_liquidtoy001`
+**QITAI LI (49133336)** · COMP3710 final report · Section 2.4, image generation
+(Hard) · `recognition/sd_adni_liquidtoy001`
 
 ## Summary
 
